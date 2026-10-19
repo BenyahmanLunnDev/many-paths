@@ -20,6 +20,7 @@ import { icon } from "./icons.js";
 const ANDROID_URL = null; // the Google Play link, once the Android app is public
 const PRIVACY_URL = "https://benyahmanlunndev.github.io/many-paths-data/privacy.html";
 const SOURCE_URL = "https://github.com/BenyahmanLunnDev/many-paths";
+const CONTACT_EMAIL = "manypathsdev@gmail.com";
 const RADII = [5, 10, 15, 25];
 const PAGE = 100; // cards drawn at once; a day of online meetings can run to hundreds
 
@@ -75,7 +76,7 @@ const state = {
 // ---- Little helpers ----
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-const safeUrl = (u) => (/^(https?:|tel:|sms:)/i.test(u ?? "") ? u : "#");
+const safeUrl = (u) => (/^(https?:|tel:|sms:|mailto:)/i.test(u ?? "") ? u : "#");
 const telUrl = (n) => "tel:" + n.replace(/[^\d+,;#*]/g, "").replace(/#/g, "%23");
 const ext = (url, text, cls = "") => `<a class="${cls}" href="${esc(safeUrl(url))}" target="_blank" rel="noopener">${text}</a>`;
 const fl = (f) => FELLOWSHIPS[f] ?? FELLOWSHIPS.OTHER;
@@ -602,6 +603,7 @@ function aboutView() {
         <h2>About</h2>
         <p>Many Paths is an independent, free project. It isn't affiliated with or endorsed by Alcoholics Anonymous, Narcotics Anonymous, Refuge Recovery, Recovery Dharma, Crystal Meth Anonymous, White Bison or any other organization. Meeting details come from their public lists and can change without notice.</p>
         ${ANDROID_URL ? `<p>${ext(ANDROID_URL, "Get the Android app on Google Play", "link")}</p>` : `<p class="muted">An Android app is coming to Google Play.</p>`}
+        <p>Questions, or a listing that's wrong? <a class="link" href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a></p>
         <p>${ext(SOURCE_URL, "Free and open source (GPL-3.0)", "link")} · ${ext(DATA.replace(/v1\/$/, ""), "Today's data report", "link")}</p>
       </section>
     </main>`;
