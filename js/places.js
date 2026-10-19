@@ -29,7 +29,9 @@ export function searchPlaces(index, query, limit = 8) {
   const zip = q.match(/^(\d{5})(?:-\d{4})?$/);
   if (zip) {
     const hit = index.zips[zip[1]];
-    return hit ? [{ label: zip[1], lat: hit[0], lng: hit[1] }] : [];
+    if (!hit) return [];
+    const town = nearestPlace(index, hit[0], hit[1]);
+    return [{ label: town ? `${town} ${zip[1]}` : zip[1], lat: hit[0], lng: hit[1] }];
   }
   // "eugene, or", "eugene or", "eugene, oregon". A trailing state is only a guess
   // ("Port Washington" is a town in New York), so the whole text is tried as a town too.

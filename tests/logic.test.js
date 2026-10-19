@@ -179,7 +179,7 @@ test("places and phone lines", () => {
   assert.equal(searchPlaces(index, "Springfield")[0].label, "Springfield, IL");
   assert.equal(searchPlaces(index, "port washington")[0].label, "Port Washington, NY");
   assert.equal(searchPlaces(index, "Eugene, O")[0].label, "Eugene, OR");
-  assert.deepEqual(searchPlaces(index, "97401"), [{ label: "97401", lat: 44.046, lng: -123.088 }]);
+  assert.deepEqual(searchPlaces(index, "97401"), [{ label: "Eugene, OR 97401", lat: 44.046, lng: -123.088 }]);
   assert.equal(nearestPlace(index, 44.06, -123.1), "Eugene, OR");
   assert.equal(nearestPlace(index, 0, 0), null);
   const lines = parseHelplines([
