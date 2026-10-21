@@ -468,8 +468,18 @@ function card(r, now, dimmed = false) {
 const favButton = (m, saved) =>
   `<button class="icon-btn fav${saved ? " on" : ""}" data-action="fav" data-key="${esc(m.key)}" aria-pressed="${saved}" aria-label="${saved ? "Remove from saved" : "Save this meeting"}">${icon(saved ? "heart" : "heartOutline")}</button>`;
 
+/**
+ * Celebrate Recovery's own group finder, opened with the place typed in. Its search runs a bot
+ * check, so CR groups can't be copied into the list; the person taps Search there.
+ */
+function crUrl(area) {
+  return "https://crlocator.com/?s=" + encodeURIComponent(area.label).replace(/%20/g, "+") +
+    `&latitude=${Math.round(area.lat * 10) / 10}&longitude=${Math.round(area.lng * 10) / 10}&filter=groups&radius=25`;
+}
+
 function footer() {
   return `<footer class="foot">
+    ${route().view === "near" && state.area ? ext(crUrl(state.area), `Celebrate Recovery groups near ${esc(state.area.label)}`) : ""}
     <a href="#/about">Where these come from · SMART, LifeRing and more</a>
     <p>Not affiliated with any fellowship. Listings change; check before a first visit. In crisis, call or text <a href="tel:988">988</a>.</p>
   </footer>`;
@@ -569,8 +579,10 @@ function aboutView() {
       return `<li><div><strong>${esc(s.source.name)}</strong><small>${esc(s.source.area ?? "")}</small><small class="${s.state === "OK" ? "" : "warn-text"}">${esc(text)}</small></div>
         ${s.source.website ? ext(s.source.website, icon("openInNew"), "icon-btn") : ""}</li>`;
     }).join("");
-  const links = state.sources.filter((s) => s.kind === "LINK").map((s) =>
-    `<li><div><strong>${esc(s.name)}</strong><small>${esc(s.area ?? "")}${s.note ? ` · ${esc(s.note)}` : ""}</small></div>${ext(s.website, icon("openInNew"), "icon-btn")}</li>`).join("");
+  const links = state.sources.filter((s) => s.kind === "LINK").map((s) => {
+    const url = s.id === "link-celebrate" && a ? crUrl(a) : s.website;
+    return `<li><div><strong>${esc(s.name)}</strong><small>${esc(s.area ?? "")}${s.note ? ` · ${esc(s.note)}` : ""}</small></div>${ext(url, icon("openInNew"), "icon-btn")}</li>`;
+  }).join("");
   const built = state.generatedAt ? new Date(state.generatedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : null;
   return `<header class="top detail-top">
       <button class="icon-btn" data-action="back" aria-label="Back">${icon("back")}</button>
