@@ -461,3 +461,10 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; width: 100%; }
 /* Tonal buttons on tinted cards need their own background to stand out. */
 .welcome .btn.tonal, .crisis .btn.tonal { background: var(--surface); color: var(--text); }
 .list > .more { justify-self: center; margin-top: 4px; }
+
+/* Help-test page */
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.step { display: flex; gap: 14px; padding: 16px; border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); }
+.step > div { display: grid; gap: 8px; min-width: 0; }
+.step h3 { font-size: 17px; }
+.step-n { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--brand); color: var(--on-brand); font-weight: 700; }
