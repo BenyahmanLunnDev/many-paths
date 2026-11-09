@@ -44,6 +44,24 @@ const notEnglish = [
   ["Aramesh Alman NA-Marathon-Meeting 24/7 گروه 24 ساعته آرامش آلمان Farsi", "Europe/Berlin"],
   ["Russian Speaking AA Meeting", PT], ["Parents en rétablissement", "America/Toronto"],
   ["Recuperação é decisão", "Europe/London"],
+  // Online NA meetings that "English only" missed in November 2026
+  ["Lundi sans soucis", "Europe/Paris"], ["Queer·es, Clean·es, Serein·es", "Europe/Paris"],
+  ["Mardi Gars", "Europe/Paris"], ["Un dimanche de gratitude", "Europe/Paris"],
+  ["Juste pour aujourd'hui", "Europe/Paris"], ["Clean dans l'Hérault", "Europe/Paris"],
+  ["Ni Dieu ni drogue", null], ["Tonnerre de Brest", "Europe/Paris"], ["Ensemble nous pouvons", "Europe/Berlin"],
+  ["Vendredi Chelsea", "Europe/London"], ["Yé trop d'bonheur", "America/Toronto"], ["L'échange", "America/Toronto"],
+  ["Principes spirituels", "America/Toronto"], ["Pleine lune virtuelle", "America/Toronto"],
+  ["NA.QC en ligne", "America/Toronto"], ["Avec simplicité", "America/New_York"],
+  ["Frauenmeeting -  Vertrauen (deutschlandweit)", "Europe/Berlin"], ["Donnerstag NAchtmeeting", "Europe/Berlin"],
+  ["LGBTQ Mittwochsmeeting", "Europe/Berlin"], ["Sucht hat keine Feiertage", "Europe/Berlin"],
+  ["In Zeiten von Krankheit", "Europe/Berlin"], ["Clean leben - Die Reise geht auch online weiter", "Europe/Berlin"],
+  ["Gelassen in den Abend", "Europe/Berlin"], ["Skype Wien", "Europe/Berlin"], ["Einheit", "Europe/Berlin"],
+  ["Insieme Possiamo Online", "Europe/Rome"], ["Cosa posso fare?", "Europe/Rome"], ["Gratitudine (Online)", "Europe/Rome"],
+  ["Juntos Conseguimos", "Europe/London"], ["NA4All Sozinhos em Casa", "Europe/London"],
+  ["Primeira Dose de Clareza", "America/Sao_Paulo"], ["¿Qué está pasando?", "America/Denver"],
+  ["Femtegruppen", "Europe/Stockholm"], ["Zindadil Zindgi Punjabi Speaking Online Meeting", "America/Toronto"],
+  ["Online Nepali Meeting", "Asia/Kathmandu"], ["Neshat NA Group (فقط زنان)", "Europe/Berlin"],
+  ["Elegtma3 Online ااجتماع اوناين", "Africa/Cairo"],
 ];
 const english = [
   ["No Matter What Group", "America/New_York"], ["Monday Night Live", PT], ["Bali International Connection", "Asia/Makassar"],
@@ -53,6 +71,16 @@ const english = [
   ["Do It Sober", "America/Denver"], ["Café Recovery", PT], ["RDO ⦿ Codependency", null],
   ["Misty Mountain Recovery Dharma - Inquiry Circle", "America/Denver"], ["R U 1 2 II", PT],
   ["As Dutch Sees It", PT], ["Grupo Bilingual (Spanish & English)", PT],
+  // English names abroad, and US names that borrow from other languages
+  ["Old School", "Europe/Moscow"], ["Talk about", "Europe/Berlin"], ["Easy does it", "Europe/Berlin"],
+  ["The show must go on", "Europe/Berlin"], ["Online meeting (keep it simple)", "Europe/Berlin"],
+  ["Late Night Meeting", "Europe/Zurich"], ["Hugs not drugs", "Europe/Paris"], ["Clean in Lisbon", "Europe/Lisbon"],
+  ["Sunday Night Live in Slovakia", "Europe/Bratislava"],
+  ["Secular Brasil: Atheist/agnostic special interest meeting", "America/Sao_Paulo"],
+  ["Mardi Gras Group", "America/Chicago"], ["Coeur d'Alene Group", PT], ["L'Anse Group", "America/Detroit"],
+  ["Unite in Recovery", "America/New_York"], ["La Quinta Group", PT], ["Lion's Den Group", "America/Denver"],
+  ["De Anza Group", PT], ["Do Or Die Group", "America/New_York"], ["La Buena Vida Group", "America/Denver"],
+  ["Rio Amigos Group", "America/Denver"],
 ];
 
 test("language detection matches the Android app", () => {

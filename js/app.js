@@ -744,6 +744,21 @@ function areaDialog() {
     dialog.close();
     setArea({ lat: place.lat, lng: place.lng, label: place.label });
   }
+  // Done goes to the town that was typed, like Enter does. With nothing typed it just closes;
+  // when no town matches, the sheet stays open with the "look it up on the map" choice.
+  dialog.querySelector('button[value="done"]').addEventListener("click", async (e) => {
+    const q = input.value.trim();
+    if (!q) return;
+    e.preventDefault();
+    clearTimeout(timer);
+    try {
+      const hits = searchPlaces(await loadPlaces(), q);
+      if (hits[0]) return choose(hits[0]);
+    } catch {
+      // falls through to the message below
+    }
+    input.dispatchEvent(new Event("input"));
+  });
   setTimeout(() => !isApple && input.focus(), 50);
 }
 
