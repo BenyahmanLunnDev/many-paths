@@ -17,7 +17,9 @@ import {
 import { formatPhone } from "./text.js";
 import { icon } from "./icons.js";
 
-const ANDROID_URL = null; // the Google Play link, once the Android app is public
+const PLAY_URL = "https://play.google.com/store/apps/details?id=com.manypaths.meetings";
+const APP_STORE_URL = "https://apps.apple.com/us/app/many-paths-recovery-meetings/id6836968521";
+const SITE = "manypathsmeetings.com";
 const PRIVACY_URL = "https://benyahmanlunndev.github.io/many-paths-data/privacy.html";
 const SOURCE_URL = "https://github.com/BenyahmanLunnDev/many-paths";
 const CONTACT_EMAIL = "manypathsdev@gmail.com";
@@ -83,6 +85,13 @@ const fl = (f) => FELLOWSHIPS[f] ?? FELLOWSHIPS.OTHER;
 const today = () => dateIn(Date.now(), viewerZone());
 const sourceById = (id) => state.sources.find((s) => s.id === id);
 const isApple = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const isAndroid = /Android/.test(navigator.userAgent);
+/** Both store buttons, the one for this phone first. */
+function storeButtons() {
+  const apple = ext(APP_STORE_URL, `${icon("download")} App Store (iPhone)`, isAndroid ? "btn tonal" : "btn");
+  const play = ext(PLAY_URL, `${icon("download")} Google Play (Android)`, isAndroid ? "btn" : "btn tonal");
+  return `<p class="row-btns">${isAndroid ? play + apple : apple + play}</p>`;
+}
 const standalone = () => navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
 
 function setState(changes) {
@@ -138,7 +147,8 @@ function setArea(area) {
 function route() {
   const h = location.hash.replace(/^#\/?/, "");
   if (h.startsWith("m/")) return { view: "detail", key: decodeURIComponent(h.slice(2)) };
-  if (["online", "saved", "about", "test"].includes(h)) return { view: h };
+  if (h === "test" || h === "get") return { view: "get" };
+  if (["online", "saved", "about"].includes(h)) return { view: h };
   return { view: "near" };
 }
 
@@ -174,10 +184,10 @@ function render() {
   document.body.dataset.view = r.view;
   if (r.view === "detail") app.innerHTML = detailView(r.key);
   else if (r.view === "about") app.innerHTML = aboutView();
-  else if (r.view === "test") app.innerHTML = testView();
+  else if (r.view === "get") app.innerHTML = getView();
   else app.innerHTML = mainView(r.view);
-  document.title = { near: "Many Paths", online: "Online meetings · Many Paths", saved: "Saved meetings · Many Paths",
-    about: "Lists and help · Many Paths", detail: "Meeting · Many Paths", test: "Help test Many Paths" }[r.view];
+  document.title = { near: "Many Paths: recovery meetings near you and online", online: "Online meetings · Many Paths", saved: "Saved meetings · Many Paths",
+    about: "Lists and help · Many Paths", detail: "Meeting · Many Paths", get: "Get Many Paths" }[r.view];
 }
 
 /** Re-renders just the list, so typing in the search box keeps its focus. */
@@ -261,13 +271,12 @@ function nearControls() {
 
 function nearList() {
   const out = [];
-  if (isApple && !standalone() && !store.get("installHintDismissed", false)) {
-    out.push(notice("Keep Many Paths on your Home Screen",
-      "Tap the Share button in Safari, then “Add to Home Screen”. It opens like an app.",
-      `<button class="text-btn" data-action="dismiss-install">Got it</button>`));
-  } else if (ANDROID_URL && /Android/.test(navigator.userAgent) && !store.get("androidHintDismissed", false)) {
-    out.push(notice("There's an Android app", "Many Paths for Android works offline and saves your meetings.",
-      `${ext(ANDROID_URL, "Get it on Google Play", "text-btn")}<button class="text-btn" data-action="dismiss-android">No thanks</button>`));
+  if (isApple && !standalone() && !store.get("iosAppHintDismissed", false)) {
+    out.push(notice("There's an iPhone app", "Many Paths for iPhone adds home-screen widgets and one-tap directions. It's free, with no ads.",
+      `${ext(APP_STORE_URL, "Get it on the App Store", "text-btn")}<button class="text-btn" data-action="dismiss-ios">No thanks</button>`));
+  } else if (isAndroid && !standalone() && !store.get("androidHintDismissed", false)) {
+    out.push(notice("There's an Android app", "Many Paths for Android adds home-screen widgets and one-tap directions. It's free, with no ads.",
+      `${ext(PLAY_URL, "Get it on Google Play", "text-btn")}<button class="text-btn" data-action="dismiss-android">No thanks</button>`));
   }
   if (!state.area) {
     out.push(`<section class="welcome">
@@ -278,6 +287,7 @@ function nearList() {
         <button class="btn tonal" data-action="pick-area">Type a city</button>
       </div>
       <p class="small">Online meetings don't need a location. They're in the Online tab.</p>
+      <p class="small">Also free for phones: ${ext(APP_STORE_URL, "iPhone app", "link")} · ${ext(PLAY_URL, "Android app", "link")}</p>
     </section>`);
     return out.join("");
   }
@@ -615,50 +625,41 @@ function aboutView() {
       <section class="card-block">
         <h2>About</h2>
         <p>Many Paths is an independent, free project. It isn't affiliated with or endorsed by Alcoholics Anonymous, Narcotics Anonymous, Refuge Recovery, Recovery Dharma, Crystal Meth Anonymous, White Bison or any other organization. Meeting details come from their public lists and can change without notice.</p>
-        ${ANDROID_URL ? `<p>${ext(ANDROID_URL, "Get the Android app on Google Play", "link")}</p>` : `<p>An Android app is coming to Google Play. <a class="link" href="#/test">Help test it</a></p>`}
+        <p>Made by Benyahman Lunn, an independent developer who works in the recovery field.</p>
+        <h3>Get the app</h3>
+        <p>The same meetings, plus home-screen widgets. Free, with no ads and no account.</p>
+        ${storeButtons()}
         <p>Questions, or a listing that's wrong? <a class="link" href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a></p>
         <p>${ext(SOURCE_URL, "Free and open source (GPL-3.0)", "link")} · ${ext(DATA.replace(/v1\/$/, ""), "Today's data report", "link")}</p>
       </section>
     </main>`;
 }
 
-// ---- Help test the Android app (one link to share instead of two links and instructions) ----
+// ---- Get the app: where the flyer's QR code and shared links land (#/get; old #/test links too) ----
 
-const GROUP_URL = "https://groups.google.com/g/many-paths-testers";
-const OPT_IN_URL = "https://play.google.com/apps/testing/com.manypaths.meetings";
-const PLAY_URL = "https://play.google.com/store/apps/details?id=com.manypaths.meetings";
-
-function testView() {
-  const android = /Android/.test(navigator.userAgent);
-  const step = (n, title, body) => `<li class="step"><span class="step-n">${n}</span><div><h3>${title}</h3>${body}</div></li>`;
-  const androidSteps = `<ol class="steps">
-      ${step(1, "Join the testers group", `<p>Use the Google account your Android phone's Play Store uses. Nobody in the group can see who else joined.</p><p>${ext(GROUP_URL, "Open the testers group", "btn")}</p>`)}
-      ${step(2, "Become a tester", `<p>On the page that opens, tap “Become a tester”.</p><p>${ext(OPT_IN_URL, "Become a tester", "btn")}</p>`)}
-      ${step(3, "Install Many Paths", `<p>It can take a little while after joining, sometimes up to a couple of hours, before Google Play lets you install it. Searching the Play Store won't find it yet; use this button.</p><p>${ext(PLAY_URL, "Open in Google Play", "btn")}</p>`)}
-      ${step(4, "Keep it for 2 weeks", `<p>Open it now and then, and tell me anything that's wrong or confusing: <a class="link" href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a></p>`)}
-    </ol>
-    <section class="card-block"><h2>It says “not found”?</h2>
-      <p>The Play Store has to be signed into the same Google account you joined the group with. In the Play Store, tap your picture (top right) and switch accounts, then try step 3 again. If it's been less than a couple of hours, give it a bit longer.</p></section>`;
+function getView() {
   return `<header class="top detail-top">
       <a class="icon-btn" href="#/" aria-label="Back">${icon("back")}</a>
-      <h1>Help test Many Paths</h1>
+      <h1>Get Many Paths</h1>
     </header>
     <main class="about">
-      <section class="card-block crisis">
-        <h2>Why testers?</h2>
-        <p>Many Paths is free, with no ads and no tracking. Before Google will put a new app in the Play Store, at least 12 people have to test it on Android phones for 14 days in a row. Testing takes a few minutes to set up, and it's the only thing standing between this app and anyone who needs it.</p>
-      </section>
-      ${android ? androidSteps : `
       <section class="card-block">
-        <h2>On an iPhone?</h2>
-        <p>iPhones can't count toward Google's test, but you don't need to wait: this website works like an app. In Safari, tap the Share button, then “Add to Home Screen”.</p>
-        <p><a class="btn" href="#/">Find meetings now</a></p>
+        <h2>Recovery meetings, all in one place</h2>
+        <p>AA, NA, Refuge Recovery, Recovery Dharma, CMA, Wellbriety and more: meetings near you and online, in one list.</p>
+        <ul class="plain-list">
+          <li>Meetings near you today or any day this week, with one-tap directions</li>
+          <li>Online meetings starting soon, in your time zone, with one-tap join</li>
+          <li>Save the meetings you go to; home-screen widgets show what's next</li>
+          <li>Free. No ads, no account, no tracking.</li>
+        </ul>
+        ${storeButtons()}
+        <p><a class="btn tonal" href="#/">Or use it here in your browser</a></p>
       </section>
-      <section class="card-block"><h2>Have an Android phone too, or want to pass this on?</h2>
-        <p>Send this page to anyone with an Android phone: <strong>benyahmanlunndev.github.io/many-paths/#/test</strong></p>
+      <section class="card-block">
+        <h2>Pass it on</h2>
+        <p>Send this page to anyone who might need it: <strong>${SITE}</strong></p>
+        <p class="muted small">Made by Benyahman Lunn, an independent developer who works in the recovery field. Many Paths isn't affiliated with any fellowship.</p>
       </section>
-      <h2 class="section">The steps on an Android phone</h2>
-      ${androidSteps}`}
     </main>`;
 }
 
@@ -972,6 +973,9 @@ document.addEventListener("click", (e) => {
       return updateList();
     case "dismiss-android":
       store.set("androidHintDismissed", true);
+      return updateList();
+    case "dismiss-ios":
+      store.set("iosAppHintDismissed", true);
       return updateList();
   }
 });

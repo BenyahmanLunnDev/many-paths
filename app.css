@@ -333,6 +333,8 @@ button { font: inherit; color: inherit; }
 }
 .list > .text-btn { justify-self: start; }
 .row-btns { display: flex; flex-wrap: wrap; gap: 10px; }
+.about h3 { font-size: 16px; margin-top: 8px; }
+.plain-list { margin: 4px 0 12px; padding-left: 20px; display: grid; gap: 6px; }
 .link { font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
 
 /* ---- Bottom tabs ---- */

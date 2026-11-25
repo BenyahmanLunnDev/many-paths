@@ -1,11 +1,12 @@
 # Many Paths on the web
 
-**https://benyahmanlunndev.github.io/many-paths/**
+**https://manypathsmeetings.com** (also at https://benyahmanlunndev.github.io/many-paths/)
 
 Recovery meetings from many fellowships in one list (AA, NA, Refuge Recovery, Recovery Dharma, CMA, Wellbriety
-and local groups), for any phone or computer with a browser. It's the web version of the Many Paths Android app,
-for iPhones and anyone who'd rather not install anything. On an iPhone, open it in Safari, tap Share, then
-**Add to Home Screen** and it opens like an app.
+and local groups), for any phone or computer with a browser. It's the web version of the Many Paths apps
+([iPhone](https://apps.apple.com/us/app/many-paths-recovery-meetings/id6836968521),
+[Android](https://play.google.com/store/apps/details?id=com.manypaths.meetings)), for anyone who'd rather not install
+anything. `/get` sends a phone straight to its app store (the flyer's QR code points there).
 
 - **Near me:** meetings around a town, ZIP code or your location, today or any day this week, with directions
 - **Online:** meetings starting soon or on any day, in your own time zone, with an English-only filter

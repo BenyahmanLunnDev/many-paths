@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Get Many Paths</title>
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://manypathsmeetings.com/#/get">
+<link rel="icon" href="../icons/favicon.svg" type="image/svg+xml">
+<!-- Where the flyer's QR code points: a phone goes straight to its app store, anything else
+     to the "Get Many Paths" page with both buttons and the web version. -->
+<script>
+  (function () {
+    var ua = navigator.userAgent;
+    var apple = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    var to = apple ? "https://apps.apple.com/us/app/many-paths-recovery-meetings/id6836968521"
+      : /Android/.test(ua) ? "https://play.google.com/store/apps/details?id=com.manypaths.meetings"
+      : "../#/get";
+    location.replace(to);
+  })();
+</script>
+<style>
+  body { font: 17px/1.5 system-ui, sans-serif; margin: 0; padding: 32px 16px; background: #eef3f2; color: #161d1d; }
+  main { max-width: 520px; margin: 0 auto; }
+  a { color: #0a6970; }
+  @media (prefers-color-scheme: dark) { body { background: #0d1415; color: #dde4e3; } a { color: #80d4da; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Many Paths</h1>
+  <p>Recovery meetings near you and online. Free, no ads, no tracking.</p>
+  <p><a href="https://apps.apple.com/us/app/many-paths-recovery-meetings/id6836968521">Get it on the App Store (iPhone)</a></p>
+  <p><a href="https://play.google.com/store/apps/details?id=com.manypaths.meetings">Get it on Google Play (Android)</a></p>
+  <p><a href="../">Or use it in your browser</a></p>
+</main>
+</body>
+</html>
