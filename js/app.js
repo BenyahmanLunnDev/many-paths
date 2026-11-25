@@ -22,7 +22,7 @@ const APP_STORE_URL = "https://apps.apple.com/us/app/many-paths-recovery-meeting
 const SITE = "manypathsmeetings.com";
 const PRIVACY_URL = "https://benyahmanlunndev.github.io/many-paths-data/privacy.html";
 const SOURCE_URL = "https://github.com/BenyahmanLunnDev/many-paths";
-const CONTACT_EMAIL = "manypathsdev@gmail.com";
+const CONTACT_EMAIL = "hello@manypathsmeetings.com";
 const RADII = [5, 10, 15, 25];
 const PAGE = 100; // cards drawn at once; a day of online meetings can run to hundreds
 
