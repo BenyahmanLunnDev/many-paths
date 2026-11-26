@@ -115,13 +115,15 @@ export function loadPlaces() {
 
 /** OpenStreetMap's search, only for places the meeting index doesn't know. */
 export async function searchOpenStreetMap(query) {
-  const url = "https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&countrycodes=us,ca&q=" +
+  const url = "https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&countrycodes=us,ca,pr,gu,vi,as,mp&q=" +
     encodeURIComponent(query);
   const results = await getJson(url, 15000);
   return (Array.isArray(results) ? results : []).map((r) => {
     const a = r.address ?? {};
     const town = a.city ?? a.town ?? a.village ?? a.hamlet ?? a.county ?? r.name;
-    const state = (a["ISO3166-2-lvl4"] ?? "").split("-")[1] ?? a.state;
+    // Territories have no state in OpenStreetMap; their country code is the "state" (PR, GU).
+    const territory = ["pr", "gu", "vi", "as", "mp"].includes(a.country_code) ? a.country_code.toUpperCase() : null;
+    const state = (a["ISO3166-2-lvl4"] ?? "").split("-")[1] ?? territory ?? a.state;
     const label = [town, state].filter(Boolean).join(", ") || r.display_name;
     return { label, lat: Number(r.lat), lng: Number(r.lon) };
   }).filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
