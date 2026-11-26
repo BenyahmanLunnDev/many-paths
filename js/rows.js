@@ -71,7 +71,8 @@ export function matches(m, query) {
 }
 
 const passes = (state, m) =>
-  (!state.fellowships.length || state.fellowships.includes(m.fellowship)) && matches(m, state.query);
+  (!state.fellowships.length || state.fellowships.includes(m.fellowship)) && matches(m, state.query) &&
+  (!state.types?.length || state.types.every((t) => m.types.includes(t)));
 
 function nearby(state, m) {
   if (!state.area || m.attendance === ONLINE) return null;

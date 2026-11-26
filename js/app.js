@@ -9,6 +9,7 @@ import {
   onlineFellowships, onlineRows, row, savedRows,
 } from "./rows.js";
 import { icsFileName, meetingIcs } from "./calendar.js";
+import { drawMap, forgetMap } from "./map.js";
 import { linesNear, nearestPlace, searchPlaces } from "./places.js";
 import { directionsUrl, listShareText, meetingShareText, weekShareText } from "./share.js";
 import {
@@ -67,6 +68,8 @@ const state = {
   favorites: validFavorites(store.get("favorites", {})),
   query: "",
   searchOpen: false,
+  types: [], // meeting-type filter from the desktop sidebar; this visit only
+  deskView: "list", // "list" or "week" on wide screens
   meetings: [],
   byKey: new Map(),
   statuses: [],
@@ -190,6 +193,8 @@ const onlineFor = (date, englishOnly) =>
 function render() {
   memoStore = new Map();
   const r = route();
+  document.body.dataset.layout = isDesk() ? "desk" : "phone";
+  if (isDesk() && r.view !== "about" && r.view !== "get") return renderDesk(r);
   document.body.dataset.view = r.view;
   if (r.view === "detail") app.innerHTML = detailView(r.key);
   else if (r.view === "about") app.innerHTML = aboutView();
@@ -202,6 +207,7 @@ function render() {
 /** Re-renders just the list, so typing in the search box keeps its focus. */
 function updateList() {
   memoStore = new Map();
+  if (isDesk() && document.querySelector(".desk")) return updateDesk();
   const list = document.getElementById("list");
   const r = route();
   if (list && r.view !== "detail" && r.view !== "about") list.innerHTML = listFor(r.view);
@@ -504,7 +510,8 @@ function card(r, now, dimmed = false) {
   const saved = Boolean(state.favorites[m.key]);
   const online = m.attendance === ONLINE ? `<span class="att">${icon("videocam", "icon tiny")}Online</span>`
     : m.attendance === HYBRID ? `<span class="att">${icon("videocam", "icon tiny")}Also online</span>` : "";
-  return `<article class="card${dimmed ? " dim" : ""}">
+  const actions = isDesk() ? cardActions(m) : "";
+  return `<article class="card${dimmed ? " dim" : ""}" data-key="${esc(m.key)}">
     <a class="card-main" href="#/m/${encodeURIComponent(m.key)}" data-action="open">
       <div class="when"><span class="hm">${esc(hm)}</span><span class="ap">${esc(ap)}</span>${zone}</div>
       <div class="what">
@@ -512,9 +519,10 @@ function card(r, now, dimmed = false) {
         <h3>${esc(m.name)}</h3>
         ${where ? `<p class="where">${esc(where)}</p>` : ""}
         ${status ? `<p class="status${r.closed ? " closed" : ""}">${esc(status)}</p>` : ""}
-        ${m.types.length ? `<p class="types">${esc(m.types.slice(0, 4).join(" · "))}</p>` : ""}
+        ${m.types.length ? `<p class="types">${esc(m.types.slice(0, isDesk() ? 8 : 4).join(" · "))}</p>` : ""}
       </div>
     </a>
+    ${actions}
     ${favButton(m, saved)}
   </article>`;
 }
@@ -607,12 +615,12 @@ function detailView(key) {
     <p class="muted small">Schedules change, especially around holidays. Check the live listing or call before a first visit.</p>
     <p>${ext(problemMail(m, r), `${icon("flag", "icon tiny")} Report a problem with this listing`, "link")}</p>`));
 
-  return back + `<main class="detail">
-    <div class="badges">${`<span class="badge f-${m.fellowship.toLowerCase()} wide">${esc(fl(m.fellowship).full)}</span>`}<span class="att">${esc(ATTENDANCE_LABEL[m.attendance])}</span></div>
-    <h1 class="detail-name">${esc(m.name)}</h1>
-    ${sections.join("")}
-  </main>`;
+  return back + `<main class="detail">${detailHead(m)}${sections.join("")}</main>`;
 }
+
+const detailHead = (m) => `
+    <div class="badges">${`<span class="badge f-${m.fellowship.toLowerCase()} wide">${esc(fl(m.fellowship).full)}</span>`}<span class="att">${esc(ATTENDANCE_LABEL[m.attendance])}</span></div>
+    <h1 class="detail-name">${esc(m.name)}</h1>`;
 
 /** "This group meets Mondays and Wednesdays at 7:00 PM", with a link to each other time. */
 function groupLine(m, now) {
@@ -713,7 +721,7 @@ function aboutView() {
       </section>
       <section class="card-block">
         <h2>Privacy</h2>
-        <p>No account, no ads, no tracking. Your place, distance and saved meetings stay in this browser. To find NA meetings, NA's meeting database is sent a point rounded to about 7 miles. Town names you type are looked up in a list that comes with the meeting data; only a place it doesn't know is looked up on OpenStreetMap.</p>
+        <p>No account, no ads, no tracking. Your place, distance and saved meetings stay in this browser. To find NA meetings, NA's meeting database is sent a point rounded to about 7 miles. Town names you type are looked up in a list that comes with the meeting data; only a place it doesn't know is looked up on OpenStreetMap. On a computer, the map's pictures come from OpenStreetMap too, which sees the map area your browser asks for, as any website would.</p>
         <p>${ext(PRIVACY_URL, "Read the full privacy policy", "link")}</p>
       </section>
       <section class="card-block">
@@ -997,7 +1005,29 @@ document.addEventListener("click", (e) => {
   switch (action) {
     case "open":
       openedDetailFromApp = true;
+      if (isDesk() && document.querySelector(".desk")) {
+        e.preventDefault();
+        const key = decodeURIComponent(el.getAttribute("href").replace(/^#\/m\//, ""));
+        if (route().view !== "detail") deskReturn = route().view;
+        history.pushState(null, "", `#/m/${encodeURIComponent(key)}`);
+        return selectDesk(key);
+      }
       return; // the link changes the hash
+    case "close-detail":
+      openedDetailFromApp = false;
+      history.pushState(null, "", deskReturn === "near" ? "#/" : `#/${deskReturn}`);
+      return selectDesk(null);
+    case "desk-view":
+      setState({ deskView: value });
+      return render();
+    case "desk-radius":
+      setState({ radius: +value });
+      return refresh();
+    case "type": {
+      const types = state.types.includes(value) ? state.types.filter((t) => t !== value) : [...state.types, value];
+      setState({ types, limit: PAGE });
+      return render();
+    }
     case "back":
       if (openedDetailFromApp && history.length > 1) history.back();
       else location.hash = "#/";
@@ -1098,6 +1128,242 @@ document.addEventListener("visibilitychange", () => {
   if (age > 3600000 || (failed && age > 30000) || state.error) refresh();
   else updateList();
 });
+
+// ---- Wide screens: filters on the left, the list in the middle, a map and details on the right ----
+
+const DESK = matchMedia("(min-width: 1100px)");
+const isDesk = () => DESK.matches;
+let deskReturn = "near"; // the list a meeting was opened from
+DESK.addEventListener("change", () => {
+  if (!isDesk()) forgetMap();
+  render();
+});
+
+const LOGO = `<svg class="dlogo" viewBox="18 18 72 72" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"><path d="M54,52 L54,78"/><path d="M54,52 C54,63 38,64 35,78"/><path d="M54,52 C54,63 70,64 73,78"/></g><circle cx="54" cy="39" r="8.5" fill="currentColor"/></svg>`;
+
+// Pin colors: the badge colors, deepened so a dot reads on a map.
+const PIN = { AA: "#2f55c8", NA: "#2e7d32", REFUGE: "#c76a00", DHARMA: "#8e44a0", CMA: "#c0392b", SMART: "#1b7f99", WELLBRIETY: "#8a6420", OTHER: "#5f6f73" };
+const pinColor = (f) => PIN[f] ?? PIN.OTHER;
+
+function renderDesk(r) {
+  const view = r.view === "detail" ? deskReturn : r.view;
+  if (r.view !== "detail") deskReturn = r.view;
+  document.body.dataset.view = view;
+  if (!document.querySelector(".desk")) {
+    app.innerHTML = `<div class="desk">
+      <header class="dtop" id="dtop"></header>
+      <aside class="dfilters" id="dfilters" aria-label="Filters"></aside>
+      <main class="dlist" id="list" aria-live="polite"></main>
+      <section class="dside" aria-label="Map and meeting details"><div class="dmap" id="dmap"></div><div class="ddetail" id="ddetail"></div></section>
+    </div>`;
+  }
+  const desk = document.querySelector(".desk");
+  desk.dataset.view = view;
+  desk.dataset.week = String(view === "near" && state.deskView === "week" && !state.query.trim());
+  const search = document.getElementById("q");
+  const hadFocus = search && document.activeElement === search;
+  document.getElementById("dtop").innerHTML = deskTop(view);
+  if (hadFocus) {
+    const q = document.getElementById("q");
+    q.focus();
+    q.setSelectionRange(q.value.length, q.value.length);
+  }
+  document.getElementById("dfilters").innerHTML = deskFilters(view);
+  updateDesk();
+  document.title = { near: "Many Paths: recovery meetings near you and online", online: "Online meetings · Many Paths", saved: "Saved meetings · Many Paths" }[view];
+}
+
+function updateDesk() {
+  const r = route();
+  const view = r.view === "detail" ? deskReturn : r.view;
+  const week = view === "near" && state.deskView === "week" && !state.query.trim() && state.area;
+  document.getElementById("list").innerHTML = week ? weekGrid() : listFor(view);
+  document.querySelector(".desk").dataset.week = String(Boolean(week));
+  selectDesk(r.view === "detail" ? r.key : null);
+}
+
+/** Shows [key] beside the list (or the empty panel), marks its card, and moves the map pin. */
+function selectDesk(key) {
+  const detail = document.getElementById("ddetail");
+  if (!detail) return;
+  const m = key ? state.byKey.get(key) ?? state.favorites[key] : null;
+  detail.innerHTML = m ? deskDetail(m) : key ? `<section class="dempty">${state.loaded ? "<h2>This meeting isn't in the lists right now</h2><p>It may have moved or ended.</p>" : "<p>Loading…</p>"}</section>` : deskWelcome();
+  detail.scrollTop = 0;
+  document.querySelectorAll(".card.sel, .witem.sel").forEach((c) => c.classList.remove("sel"));
+  if (key) {
+    const sel = `[data-key="${CSS.escape(key)}"]`;
+    document.querySelectorAll(`.card${sel}, .witem${sel}`).forEach((c) => c.classList.add("sel"));
+  }
+  deskMap(key);
+}
+
+function deskTop(view) {
+  const tab = (id, href, name, label) =>
+    `<a href="${href}" class="dtab${view === id ? " on" : ""}"${view === id ? ' aria-current="page"' : ""}>${icon(name)}<span>${label}</span></a>`;
+  return `
+    <a class="dbrand" href="#/" aria-label="Many Paths, meetings near you">${LOGO}<span>Many Paths</span></a>
+    <nav class="dtabs" aria-label="Sections">${tab("near", "#/", "place", "Near me")}${tab("online", "#/online", "videocam", "Online")}${tab("saved", "#/saved", "heart", "Saved")}</nav>
+    <label class="dsearch">${icon("search")}<input id="q" type="search" placeholder="Search names, places and types across the week" value="${esc(state.query)}" autocomplete="off" aria-label="Search meetings"></label>
+    <div class="dtop-actions">
+      <a class="btn tonal" href="#/get">${icon("download")} Get the app</a>
+      <button class="icon-btn" data-action="share-menu" aria-label="Share this list">${icon("share")}</button>
+      <a class="icon-btn" href="#/about" aria-label="Meeting lists and help">${icon("info")}</a>
+    </div>`;
+}
+
+const fbox = (title, body, extra = "") => `<section class="fbox"><div class="fbox-h"><h2>${title}</h2>${extra}</div>${body}</section>`;
+
+function optionRow({ action, value = "", on, label, count = null, dot = null, title = "", single = false }) {
+  const mark = dot ? `<span class="fdot" style="background:${dot}"></span>`
+    : single ? `<span class="fradio"></span>` : `<span class="fcheck">${on ? icon("check", "icon tiny") : ""}</span>`;
+  return `<button class="frow${on ? " on" : ""}" data-action="${action}" data-value="${esc(value)}" aria-pressed="${on}"${title ? ` title="${esc(title)}"` : ""}>
+    ${mark}
+    <span class="flabel">${esc(label)}</span>${count !== null ? `<span class="fcount">${count}</span>` : ""}
+  </button>`;
+}
+
+/** Type labels across [rows], most common first, with the ones already picked kept. */
+function typeCounts(rows) {
+  const counts = new Map();
+  for (const r of rows) for (const t of r.m.types) counts.set(t, (counts.get(t) ?? 0) + 1);
+  const top = [...counts].sort((a, b) => b[1] - a[1]).slice(0, 10);
+  for (const t of state.types) if (!top.some(([x]) => x === t)) top.push([t, counts.get(t) ?? 0]);
+  return top;
+}
+
+function fellowshipRows(available, countOf) {
+  const all = !state.fellowships.length;
+  return optionRow({ action: "fellowship", on: all, label: "All fellowships" }) + available.map((f) =>
+    optionRow({ action: "fellowship", value: f, on: state.fellowships.includes(f), label: fl(f).full, count: countOf(f), dot: pinColor(f) })).join("");
+}
+
+function deskFilters(view) {
+  if (view === "saved") {
+    const n = Object.keys(state.favorites).length;
+    return fbox("Saved", `<p class="muted small">${n ? `${n} saved ${n === 1 ? "meeting" : "meetings"}, soonest first.` : "Tap the heart on any meeting to keep it here."} Saved meetings stay in this browser.</p>`);
+  }
+  const t = today();
+  const withoutTypes = { ...state, types: [] };
+  if (view === "online") {
+    const date = state.onlineWhen === "soon" ? null : addDays(t, state.onlineWhen);
+    const whens = [["soon", "Starting soon"], ...Array.from({ length: 7 }, (_, i) => [i, dayTitle(addDays(t, i), t)])];
+    const rows = onlineFor(date, state.englishOnly);
+    const shown = rows.length;
+    const hidden = state.englishOnly ? onlineFor(date, false).length - shown : 0;
+    const base = onlineRows(withoutTypes, date, Date.now(), { englishOnly: state.englishOnly });
+    return fbox("When", whens.map(([v, label]) => optionRow({ action: "online-when", value: String(v), on: state.onlineWhen === v, label, single: true })).join("") +
+        `<p class="muted small fnote">Times are in your time zone (${esc(zoneShort(Date.now(), viewerZone()))}).</p>`) +
+      fbox("Language", optionRow({ action: "english", on: state.englishOnly, label: "English only", count: hidden > 0 ? `${hidden} hidden` : null })) +
+      fbox("Fellowship", fellowshipRows(onlineFellowships(state), (f) => rows.filter((r) => r.m.fellowship === f).length)) +
+      fbox("Meeting type", typeCounts(base).map(([label, n]) => optionRow({ action: "type", value: label, on: state.types.includes(label), label, count: n, title: describe(label) ?? "" })).join("") || `<p class="muted small">No types listed.</p>`);
+  }
+  if (!state.area) {
+    return fbox("Where", `<p class="muted small">Choose a place to see meetings near it.</p>
+      <div class="fbtns"><button class="btn" data-action="locate">${icon("myLocation")} Use my location</button><button class="btn tonal" data-action="pick-area">Type a city</button></div>`);
+  }
+  const date = addDays(t, state.dayOffset);
+  const lines = linesNear(state.helplines, state.area);
+  const days = Array.from({ length: 7 }, (_, i) => i).map((i) => {
+    const d = addDays(t, i);
+    const n = nearbyRows(state, d).filter((r) => !r.closed).length;
+    const holiday = holidayOn(d);
+    return optionRow({ action: "day", value: String(i), on: state.dayOffset === i, label: dayTitle(d, t) + (holiday ? " · holiday" : ""), count: n, title: holiday ? cap(holiday) : "", single: true });
+  }).join("");
+  const rows = nearbyRows(state, date);
+  return fbox("Where", `
+      <button class="farea" data-action="pick-area">${icon("place", "icon brand")}<span><strong>${esc(state.area.label)}</strong><small>Change place</small></span></button>
+      <div class="fseg" role="group" aria-label="Distance">${RADII.map((d) => `<button class="${state.radius === d ? "on" : ""}" data-action="desk-radius" data-value="${d}" aria-pressed="${state.radius === d}">${d} mi</button>`).join("")}</div>`) +
+    fbox("Day", days, `<div class="fseg small" role="group" aria-label="Layout"><button class="${state.deskView === "list" ? "on" : ""}" data-action="desk-view" data-value="list" aria-pressed="${state.deskView === "list"}">List</button><button class="${state.deskView === "week" ? "on" : ""}" data-action="desk-view" data-value="week" aria-pressed="${state.deskView === "week"}">Week</button></div>`) +
+    fbox("Fellowship", fellowshipRows(nearbyFellowships(state), (f) => rows.filter((r) => r.m.fellowship === f && !r.closed).length)) +
+    fbox("Meeting type", typeCounts(nearbyRows(withoutTypes, date)).map(([label, n]) => optionRow({ action: "type", value: label, on: state.types.includes(label), label, count: n, title: describe(label) ?? "" })).join("") || `<p class="muted small">No types listed for this day.</p>`) +
+    (lines.length ? fbox("Phone lines", `<ul class="flines">${lines.map(({ line }) => `<li><span>${esc(line.name)}</span>${line.phones.slice(0, 2).map((p) => `<a href="${esc(telUrl(p.number))}">${esc(p.number)} · ${esc(p.label)}</a>`).join("")}</li>`).join("")}<li><span>Crisis, any time</span><a href="tel:988">Call or text 988</a></li></ul>`) : "");
+}
+
+function cardActions(m) {
+  const out = [];
+  if (m.attendance !== ONLINE) {
+    const d = directionsUrl(m);
+    if (d) out.push(ext(d, `${icon("directions", "icon tiny")} Directions`, "mini"));
+  }
+  if (isJoinable(m) && m.joinUrl) out.push(ext(m.joinUrl, `${icon("videocam", "icon tiny")} ${esc(joinLabel(m.joinUrl))}`, "mini"));
+  return out.length ? `<div class="card-actions">${out.join("")}</div>` : "";
+}
+
+function weekGrid() {
+  const t = today();
+  const cols = Array.from({ length: 7 }, (_, i) => addDays(t, i)).map((d) => [d, nearbyRows(state, d)]);
+  return `<div class="week">${cols.map(([d, rows]) => {
+    const holiday = holidayOn(d);
+    return `<section class="wcol${d === addDays(t, state.dayOffset) ? " on" : ""}">
+      <h3><span>${esc(dayChipLabel(d, t))}</span><small>${rows.filter((r) => !r.closed).length}</small></h3>
+      ${holiday ? `<p class="wholiday" title="Some places close on holidays">${esc(cap(holiday))}</p>` : ""}
+      ${rows.map((r) => `<a class="witem${r.closed ? " closed" : ""}" href="#/m/${encodeURIComponent(r.m.key)}" data-action="open" data-key="${esc(r.m.key)}">
+        <span class="wtime">${esc(clock(r.start, r.tz))}</span><span class="wdot" style="background:${pinColor(r.m.fellowship)}"></span><span class="wname">${esc(r.m.name)}${r.closed ? " (not meeting)" : ""}</span></a>`).join("") || `<p class="muted small">No meetings</p>`}
+    </section>`;
+  }).join("")}</div>`;
+}
+
+function deskDetail(m) {
+  const page = detailView(m.key);
+  const body = page.slice(page.indexOf('<main class="detail">') + '<main class="detail">'.length, page.lastIndexOf("</main>"));
+  return `<div class="dd-bar">
+      <button class="icon-btn" data-action="close-detail" aria-label="Close details">${icon("close")}</button>
+      <div class="top-actions"><button class="icon-btn" data-action="share-meeting" data-key="${esc(m.key)}" aria-label="Share this meeting">${icon("share")}</button>${favButton(m, Boolean(state.favorites[m.key]))}</div>
+    </div>
+    <div class="detail">${body}</div>`;
+}
+
+function deskWelcome() {
+  return `<section class="dempty">
+    <h2>Pick a meeting to see its details</h2>
+    <p class="muted">Directions, how to join online, what the meeting is like, and the group's other days.</p>
+    <div class="dcrisis"><strong>Help right now</strong><span>988 Suicide &amp; Crisis Lifeline, any time</span><a class="btn" href="tel:988">Call or text 988</a></div>
+  </section>`;
+}
+
+/** The pins for what's in the list: the day's meetings, or every match while searching. */
+function deskMap(selected) {
+  const el = document.getElementById("dmap");
+  if (!el) return;
+  const view = route().view === "detail" ? deskReturn : route().view;
+  const desk = document.querySelector(".desk");
+  let rows = [];
+  if (view === "near" && state.area) {
+    const t = today();
+    rows = state.query.trim()
+      ? Array.from({ length: 7 }, (_, i) => nearbyRows(state, addDays(t, i))).flat()
+      : nearbyRows(state, addDays(t, state.dayOffset));
+  } else if (view === "saved" && state.area) {
+    rows = savedRows(state, Date.now()).filter((r) => r.m.attendance !== ONLINE);
+  }
+  const open = selected ? state.byKey.get(selected) ?? state.favorites[selected] : null;
+  if (open && open.attendance !== ONLINE && !rows.some((r) => r.m.key === open.key)) rows.push(row(open, nextOccurrence(open, Date.now()), zoneOf(open), null));
+  const hasMap = Boolean(state.area) && (view === "near" || rows.length > 0);
+  desk.dataset.map = String(hasMap);
+  if (!hasMap) return;
+  const seen = new Set();
+  const points = rows.filter((r) => !seen.has(r.m.key) && seen.add(r.m.key)).map((r) => ({
+    key: r.m.key,
+    lat: r.m.lat,
+    lng: r.m.lng,
+    color: pinColor(r.m.fellowship),
+    title: r.m.name,
+    time: clock(r.start, r.tz),
+    place: r.m.locationName ?? r.m.address ?? r.m.name,
+  }));
+  drawMap(el, {
+    center: state.area,
+    radiusMiles: state.radius,
+    points,
+    selected,
+    onPick: (key) => {
+      if (route().view !== "detail") deskReturn = route().view;
+      history.pushState(null, "", `#/m/${encodeURIComponent(key)}`);
+      selectDesk(key);
+      document.querySelector(`.card[data-key="${CSS.escape(key)}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    },
+  });
+}
 
 // ---- Start ----
 
