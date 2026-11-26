@@ -1302,7 +1302,8 @@ function deskBar(view) {
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = addDays(t, i);
     const holiday = holidayOn(d);
-    return chip({ action: "day", value: String(i), on: state.dayOffset === i, label: dayChipLabel(d, t), count: nearbyRows(state, d).filter((x) => !x.closed).length, title: holiday ? cap(holiday) : "" });
+    const n = nearbyRows(state, d).filter((x) => !x.closed).length;
+    return chip({ action: "day", value: String(i), on: state.dayOffset === i, label: dayChipLabel(d, t), title: `${n} ${n === 1 ? "meeting" : "meetings"}${holiday ? ` · ${cap(holiday)}` : ""}` });
   }).join("");
   const lines = linesNear(state.helplines, state.area);
   return `<div class="brow">
@@ -1402,7 +1403,7 @@ function weekGrid() {
   return `<div class="week">${cols.map(([d, rows]) => {
     const holiday = holidayOn(d);
     return `<section class="wcol${d === addDays(t, state.dayOffset) ? " on" : ""}">
-      <h3><span>${esc(dayChipLabel(d, t))}</span><small>${rows.filter((r) => !r.closed).length}</small></h3>
+      <h3><span>${esc(dayChipLabel(d, t))}</span><small>${rows.filter((r) => !r.closed).length} meetings</small></h3>
       ${holiday ? `<p class="wholiday" title="Some places close on holidays">${esc(cap(holiday))}</p>` : ""}
       ${rows.map((r) => `<a class="witem${r.closed ? " closed" : ""}" href="#/m/${encodeURIComponent(r.m.key)}" data-action="open" data-key="${esc(r.m.key)}">
         <span class="wtime">${esc(clock(r.start, r.tz))}</span><span class="wdot" style="background:${pinColor(r.m.fellowship)}"></span><span class="wname">${esc(r.m.name)}${r.closed ? " (not meeting)" : ""}</span></a>`).join("") || `<p class="muted small">No meetings</p>`}

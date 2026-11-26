@@ -543,7 +543,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; width: 100%; }
   .bchip { display: inline-flex; align-items: center; gap: 6px; flex: none; height: 34px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--text); font: inherit; font-size: 14px; font-weight: 600; text-decoration: none; white-space: nowrap; cursor: pointer; }
   .bchip:hover { background: var(--surface-2); }
   .bchip.on { border-color: transparent; background: var(--brand-soft); color: var(--on-brand-soft); }
-  .bchip small { color: var(--muted); font-size: 12px; font-weight: 600; }
+  .bchip small { color: var(--muted); font-size: 11.5px; font-weight: 500; opacity: 0.85; }
   .bchip.on small { color: inherit; opacity: 0.8; }
   .crisis-chip { margin-left: auto; border-color: transparent; background: transparent; color: var(--brand); }
   .bplace { display: inline-flex; align-items: center; gap: 8px; flex: none; max-width: 320px; height: 38px; padding: 0 12px 0 10px; border: 0; border-radius: 12px; background: var(--surface-2); color: var(--text); font: inherit; cursor: pointer; }
@@ -566,7 +566,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; width: 100%; }
   .frow:hover { background: var(--surface-2); }
   .frow.on { background: var(--brand-soft); color: var(--on-brand-soft); font-weight: 600; }
   .flabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .fcount { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .fcount { color: var(--muted); font-size: 12px; font-weight: 500; opacity: 0.85; font-variant-numeric: tabular-nums; }
   .frow.on .fcount { color: inherit; }
   .fdot { flex: none; width: 11px; height: 11px; border-radius: 50%; }
   .fcheck { display: grid; place-items: center; flex: none; width: 18px; height: 18px; border: 1.5px solid var(--line); border-radius: 5px; }
@@ -638,8 +638,8 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; width: 100%; }
   .week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); align-items: start; gap: 8px; }
   .wcol { display: grid; gap: 2px; padding: 8px 6px 10px; border-radius: 14px; background: var(--surface); box-shadow: var(--shadow); }
   .wcol.on { box-shadow: 0 0 0 2px var(--brand); }
-  .wcol h3 { display: flex; justify-content: space-between; align-items: baseline; margin: 0 4px 6px; font-size: 15px; }
-  .wcol h3 small { color: var(--muted); font-weight: 600; }
+  .wcol h3 { display: grid; margin: 0 4px 6px; font-size: 15px; line-height: 1.2; }
+  .wcol h3 small { color: var(--muted); font-size: 12px; font-weight: 500; }
   .wholiday { margin: 0 4px 6px; padding: 2px 6px; border-radius: 6px; background: var(--warn-bg); color: var(--warn-text); font-size: 12px; font-weight: 600; }
   .witem { display: grid; grid-template-columns: 8px minmax(0, 1fr); column-gap: 6px; padding: 5px 6px; border-radius: 8px; color: inherit; text-decoration: none; font-size: 13px; line-height: 1.25; }
   .witem .wtime { grid-column: 1 / -1; font-size: 12px; }
