@@ -363,6 +363,13 @@ function areaNotices() {
       `Last copied ${esc(copy.date ?? "recently")}. Times and places can change; check their list before a first visit.`,
       copy.source.website ? ext(copy.source.website, "Open", "text-btn") : "", true));
   }
+  // Places whose list isn't in a form apps can read (Chicago, New Orleans...): point to it.
+  const elsewhere = state.sources.filter((s) => s.kind === "LINK" && s.centerLat != null && covers(s, state.area.lat, state.area.lng));
+  for (const s of elsewhere.slice(0, 2)) {
+    out.push(notice(`${esc(s.name)} isn't in Many Paths yet`,
+      "Their meeting list is on their own website. Meetings shown here come from the other lists that cover this area.",
+      s.website ? ext(s.website, "Open their list", "text-btn") : "", true));
+  }
   const missing = restricted.filter((r) => !copied.some((c) => c.source.copyOf === r.id));
   if (missing.length) {
     const others = missing.length - 1;
@@ -684,7 +691,8 @@ function aboutView() {
       return `<li><div><strong>${esc(s.source.name)}</strong><small>${esc(s.source.area ?? "")}</small><small class="${s.state === "OK" ? "" : "warn-text"}">${esc(text)}</small></div>
         ${s.source.website ? ext(s.source.website, icon("openInNew"), "icon-btn") : ""}</li>`;
     }).join("");
-  const links = state.sources.filter((s) => s.kind === "LINK").map((s) => {
+  // Area links only show for a place they cover; the rest are for anywhere.
+  const links = state.sources.filter((s) => s.kind === "LINK" && (s.centerLat == null || (a && covers(s, a.lat, a.lng)))).map((s) => {
     const url = s.id === "link-celebrate" && a ? crUrl(a) : s.website;
     return `<li><div><strong>${esc(s.name)}</strong><small>${esc(s.area ?? "")}${s.note ? ` · ${esc(s.note)}` : ""}</small></div>${ext(url, icon("openInNew"), "icon-btn")}</li>`;
   }).join("");
