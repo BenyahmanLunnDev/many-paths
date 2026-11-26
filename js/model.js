@@ -8,6 +8,7 @@ export const FELLOWSHIPS = {
   CMA: { label: "CMA", full: "Crystal Meth Anonymous" },
   SMART: { label: "SMART", full: "SMART Recovery" },
   WELLBRIETY: { label: "Wellbriety", full: "Wellbriety and Native-led recovery" },
+  ALANON: { label: "Al-Anon", full: "Al-Anon (for families and friends)" },
   OTHER: { label: "Other", full: "Other recovery groups" },
 };
 

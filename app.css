@@ -25,6 +25,7 @@
   --f-cma: #ffdcd8; --f-cma-text: #85201a;
   --f-smart: #d4eef6; --f-smart-text: #0b5063;
   --f-wellbriety: #f0e4cc; --f-wellbriety-text: #584015;
+  --f-alanon: #fbdce8; --f-alanon-text: #831843;
   --f-other: #e1e5e5; --f-other-text: #39464a;
 }
 
@@ -54,6 +55,7 @@
     --f-cma: #5c2420; --f-cma-text: #ffd9d4;
     --f-smart: #153f4b; --f-smart-text: #cdeef7;
     --f-wellbriety: #4a3b1d; --f-wellbriety-text: #f2e3c4;
+    --f-alanon: #5a1d38; --f-alanon-text: #fbd6e6;
     --f-other: #333c3e; --f-other-text: #dbe2e3;
   }
 }
@@ -248,6 +250,7 @@ button { font: inherit; color: inherit; }
 .f-cma { background: var(--f-cma); color: var(--f-cma-text); }
 .f-smart { background: var(--f-smart); color: var(--f-smart-text); }
 .f-wellbriety { background: var(--f-wellbriety); color: var(--f-wellbriety-text); }
+.f-alanon { background: var(--f-alanon); color: var(--f-alanon-text); }
 .att { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 14px; }
 
 .notice {

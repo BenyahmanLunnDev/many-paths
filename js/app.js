@@ -1162,7 +1162,7 @@ DESK.addEventListener("change", () => {
 const LOGO = `<svg class="dlogo" viewBox="18 18 72 72" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"><path d="M54,52 L54,78"/><path d="M54,52 C54,63 38,64 35,78"/><path d="M54,52 C54,63 70,64 73,78"/></g><circle cx="54" cy="39" r="8.5" fill="currentColor"/></svg>`;
 
 // Pin colors: the badge colors, deepened so a dot reads on a map.
-const PIN = { AA: "#2f55c8", NA: "#2e7d32", REFUGE: "#c76a00", DHARMA: "#8e44a0", CMA: "#c0392b", SMART: "#1b7f99", WELLBRIETY: "#8a6420", OTHER: "#5f6f73" };
+const PIN = { AA: "#2f55c8", NA: "#2e7d32", REFUGE: "#c76a00", DHARMA: "#8e44a0", CMA: "#c0392b", SMART: "#1b7f99", WELLBRIETY: "#8a6420", ALANON: "#be185d", OTHER: "#5f6f73" };
 const pinColor = (f) => PIN[f] ?? PIN.OTHER;
 
 const deskLayout = () => (store.get("deskLayout", "top") === "side" ? "side" : "top");
