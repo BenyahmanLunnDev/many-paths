@@ -1,11 +1,11 @@
 // Offline support. The app's own files are served from the cache and refreshed in the
 // background; meeting lists come from the network when it answers, else the last copy.
-const VERSION = "2026-11-25.2";
+const VERSION = "2026-11-26.1";
 const SHELL = `shell-${VERSION}`;
 const DATA = "data-v1";
 const SHELL_FILES = [
   "./", "index.html", "app.css", "manifest.webmanifest",
-  "js/app.js", "js/data.js", "js/icons.js", "js/labels.js", "js/language.js", "js/model.js",
+  "js/app.js", "js/calendar.js", "js/data.js", "js/icons.js", "js/labels.js", "js/language.js", "js/model.js",
   "js/parse.js", "js/places.js", "js/rows.js", "js/share.js", "js/text.js", "js/time.js",
   "icons/favicon.svg", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png",
 ];

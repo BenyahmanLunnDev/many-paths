@@ -230,3 +230,39 @@ test("shared text", () => {
   assert.match(week, /TUESDAY, OCT 20/);
   assert.match(week, /No meetings listed/);
 });
+
+test("holidays, closed days and a group's other times", async () => {
+  const { holidayOn, skippedOn, upcomingSkips, dayList } = await import("../js/time.js");
+  const { groupMeetings } = await import("../js/rows.js");
+  assert.equal(holidayOn("2026-11-26"), "Thanksgiving");
+  assert.equal(holidayOn("2026-11-27"), "the day after Thanksgiving");
+  assert.equal(holidayOn("2027-01-18"), "Martin Luther King Jr. Day");
+  assert.equal(holidayOn("2027-05-31"), "Memorial Day");
+  assert.equal(holidayOn("2026-11-25"), null);
+  const m = { key: "x:1:5", day: 5, start: 18 * 60, duration: 120, tz: PT, skip: ["2026-11-27"], until: null };
+  assert.notEqual(skippedOn(m, "2026-11-27", PT), null);
+  assert.equal(skippedOn(m, "2026-12-04", PT), null);
+  assert.deepEqual(upcomingSkips(m, "2026-11-26"), ["2026-11-27"]);
+  assert.equal(dayList([3, 1]), "Mondays and Wednesdays");
+  assert.equal(dayList([1, 2, 3, 4, 5, 6]), "Monday through Saturday");
+  assert.equal(dayList([0, 1, 2, 3, 4, 5, 6]), "every day");
+  const base = { fellowship: "AA", name: "Try God", attendance: "IN_PERSON", address: "1 Church St, Eugene, OR", lat: 44, lng: -123, start: 1140 };
+  const mon = { ...base, key: "a", day: 1 }, wed = { ...base, key: "b", day: 3 };
+  const other = { ...base, key: "c", day: 2, address: "9 Far Rd, Bend, OR", lat: 44.05, lng: -121.3 };
+  assert.deepEqual(groupMeetings([wed, other, mon], mon).map((g) => g.key), ["a", "b"]);
+});
+
+test("calendar file and state search", async () => {
+  const { meetingIcs } = await import("../js/calendar.js");
+  const m = { key: "evi:12:1", name: "Try God", day: 1, start: 19 * 60, duration: 60, tz: PT, attendance: "IN_PERSON",
+    locationName: "First Church", address: "1 Church St, Eugene, OR", skip: ["2026-11-30"], until: null, listingUrl: null, joinUrl: null };
+  const ics = meetingIcs(m, { now: Date.UTC(2026, 10, 26, 18), label: "AA" });
+  assert.match(ics, /DTSTART;TZID=America\/Los_Angeles:20261130T190000/);
+  assert.match(ics, /RRULE:FREQ=WEEKLY;BYDAY=MO/);
+  assert.match(ics, /EXDATE;TZID=America\/Los_Angeles:20261130T190000/);
+  assert.match(ics, /SUMMARY:Try God \(AA\)/);
+  assert.ok(ics.includes(String.raw`LOCATION:First Church\, 1 Church St\, Eugene\, OR`));
+  const index = { places: [["Eugene", "OR", 44, -123, 300], ["Hilo", "HI", 19.7, -155.1, 69], ["Maui", "HI", 20.8, -156.3, 152], ["Hawaiian Gardens", "CA", 33.8, -118.1, 3]], zips: {} };
+  assert.deepEqual(searchPlaces(index, "hawaii").map((p) => p.label), ["Maui, HI", "Hilo, HI", "Hawaiian Gardens, CA"]);
+  assert.deepEqual(searchPlaces(index, "maui").map((p) => p.label), ["Maui, HI"]);
+});

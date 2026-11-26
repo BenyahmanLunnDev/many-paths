@@ -1,7 +1,7 @@
 // Turning meetings into the lists on screen (the Android app's Listing.kt and Meetings).
 
 import { FELLOWSHIPS, FELLOWSHIP_ORDER, IN_PERSON, ONLINE, isJoinable } from "./model.js";
-import { nextOccurrence, occurrenceOn, viewerZone, zoneOf } from "./time.js";
+import { nextOccurrence, occurrenceOn, skippedOn, viewerZone, zoneOf } from "./time.js";
 
 const EARTH_RADIUS_MILES = 3958.8;
 const rad = (d) => (d * Math.PI) / 180;
@@ -87,7 +87,10 @@ export function row(m, start, tz, dist) {
 export const inProgress = (r, now) => now >= r.start && now < r.end;
 export const ended = (r, now) => now >= r.end;
 
-/** In-person and hybrid meetings within the radius on [date], in their local time. */
+/**
+ * In-person and hybrid meetings within the radius on [date], in their local time. A meeting its
+ * list says isn't happening that day stays in, marked closed, so regulars see it's off.
+ */
 export function nearbyRows(state, date) {
   const out = [];
   for (const m of state.meetings) {
@@ -97,8 +100,37 @@ export function nearbyRows(state, date) {
     const tz = zoneOf(m);
     const start = occurrenceOn(m, date, tz);
     if (start !== null) out.push(row(m, start, tz, d));
+    else {
+      const skipped = skippedOn(m, date, tz);
+      if (skipped !== null) out.push({ ...row(m, skipped, tz, d), closed: true });
+    }
   }
   return out.sort((a, b) => a.start - b.start || a.dist - b.dist);
+}
+
+const groupName = (s) => (s ?? "").toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, " ").trim();
+
+/**
+ * Every listed time for the group [m] belongs to: same fellowship and name, and the same place
+ * (or the same online room), soonest weekday first. "Is Try God only Monday and Wednesday?"
+ */
+export function groupMeetings(meetings, m) {
+  const name = groupName(m.name);
+  const samePlace = (o) => {
+    if (m.attendance === ONLINE || o.attendance === ONLINE) return Boolean(m.joinUrl) && o.joinUrl === m.joinUrl;
+    if (m.address && o.address && m.address === o.address) return true;
+    return hasCoordinates(m) && hasCoordinates(o) && miles(m.lat, m.lng, o.lat, o.lng) < 0.1;
+  };
+  const seen = new Set();
+  return meetings
+    .filter((o) => o.fellowship === m.fellowship && groupName(o.name) === name && (o === m || samePlace(o)))
+    .filter((o) => {
+      const k = `${o.day}@${o.start}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    })
+    .sort((a, b) => a.day - b.day || a.start - b.start);
 }
 
 /** Online meetings in the viewer's time. With no [date]: in progress or starting within [hoursAhead]. */

@@ -224,6 +224,10 @@ button { font: inherit; color: inherit; }
 .what h3 { font-size: 18px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
 .where { color: var(--muted); }
 .status { color: var(--brand); font-weight: 600; }
+.status.closed { color: var(--error); }
+.group-times { margin-top: 10px; }
+.group-times ul { margin: 4px 0 0; padding-left: 20px; display: grid; gap: 2px; }
+.strong { font-weight: 600; }
 .types { color: var(--muted); font-size: 14px; }
 
 .badges { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }

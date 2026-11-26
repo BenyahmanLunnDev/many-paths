@@ -15,7 +15,7 @@ const STATES = {
   ohio: "OH", oklahoma: "OK", oregon: "OR", pennsylvania: "PA", "rhode island": "RI",
   "south carolina": "SC", "south dakota": "SD", tennessee: "TN", texas: "TX", utah: "UT", vermont: "VT",
   virginia: "VA", washington: "WA", "west virginia": "WV", wisconsin: "WI", wyoming: "WY",
-  "puerto rico": "PR", alberta: "AB", "british columbia": "BC", manitoba: "MB", "new brunswick": "NB",
+  "puerto rico": "PR", guam: "GU", "us virgin islands": "VI", "virgin islands": "VI", alberta: "AB", "british columbia": "BC", manitoba: "MB", "new brunswick": "NB",
   "newfoundland and labrador": "NL", "nova scotia": "NS", ontario: "ON", "prince edward island": "PE",
   quebec: "QC", saskatchewan: "SK",
 };
@@ -32,6 +32,14 @@ export function searchPlaces(index, query, limit = 8) {
     if (!hit) return [];
     const town = nearestPlace(index, hit[0], hit[1]);
     return [{ label: town ? `${town} ${zip[1]}` : zip[1], lat: hit[0], lng: hit[1] }];
+  }
+  // A state on its own ("Hawaii", "Alaska"): its busiest towns and islands, then any town that
+  // happens to share the name.
+  const stateOnly = STATES[q];
+  if (stateOnly) {
+    const inState = index.places.filter((p) => p[1] === stateOnly).sort((a, b) => b[4] - a[4]);
+    const named = rankPlaces(index, q, null).filter(([, p]) => p[1] !== stateOnly).map(([, p]) => p);
+    return [...inState, ...named].slice(0, limit).map((p) => ({ label: `${p[0]}, ${p[1]}`, lat: p[2], lng: p[3] }));
   }
   // "eugene, or", "eugene or", "eugene, oregon". A trailing state is only a guess
   // ("Port Washington" is a town in New York), so the whole text is tried as a town too.

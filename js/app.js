@@ -5,14 +5,15 @@ import { DATA, loadCatalog, loadHelplines, loadMeetings, loadPlaces, searchOpenS
 import { ATTENDANCE_LABEL, FELLOWSHIPS, HYBRID, IN_PERSON, ONLINE, isJoinable, placeLine } from "./model.js";
 import { describe } from "./labels.js";
 import {
-  covers, distanceTo, ended, formatMiles, inProgress, miles, nearbyFellowships, nearbyRows,
+  covers, distanceTo, ended, formatMiles, groupMeetings, inProgress, miles, nearbyFellowships, nearbyRows,
   onlineFellowships, onlineRows, row, savedRows,
 } from "./rows.js";
+import { icsFileName, meetingIcs } from "./calendar.js";
 import { linesNear, nearestPlace, searchPlaces } from "./places.js";
 import { directionsUrl, listShareText, meetingShareText, weekShareText } from "./share.js";
 import {
-  addDays, clock, clockParts, copiedDate, dateIn, dayChipLabel, dayTitle, differsFromViewer, nextOccurrence,
-  relativeDay, statusText, timeRange, viewerZone, weekly, zoneOf, zoneShort,
+  addDays, clock, clockParts, copiedDate, dateIn, dayChipLabel, dayList, dayTitle, differsFromViewer, holidayOn,
+  nextOccurrence, relativeDay, shortDate, statusText, timeRange, upcomingSkips, viewerZone, weekly, zoneOf, zoneShort,
 } from "./time.js";
 import { formatPhone } from "./text.js";
 import { icon } from "./icons.js";
@@ -20,6 +21,14 @@ import { icon } from "./icons.js";
 const PLAY_URL = "https://play.google.com/store/apps/details?id=com.manypaths.meetings";
 const APP_STORE_URL = "https://apps.apple.com/us/app/many-paths-recovery-meetings/id6836968521";
 const SITE = "manypathsmeetings.com";
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** A heads-up on holidays: most lists don't say when a church or club closes for one. */
+function holidayNotice(date, t) {
+  const holiday = holidayOn(date);
+  return holiday ? notice(`${esc(dayTitle(date, t))}: ${esc(cap(holiday))}`,
+    "Some meetings and buildings close or change times on holidays, and most lists don't say so. Check before you go.", "", true) : "";
+}
 const PRIVACY_URL = "https://benyahmanlunndev.github.io/many-paths-data/privacy.html";
 const SOURCE_URL = "https://github.com/BenyahmanLunnDev/many-paths";
 const CONTACT_EMAIL = "hello@manypathsmeetings.com";
@@ -293,9 +302,14 @@ function nearList() {
   }
   out.push(...areaNotices());
   const t = today();
+  const now = Date.now();
+  if (state.query.trim()) {
+    out.push(...weekMatches((date) => nearbyRows(state, date), `within ${state.radius} miles`), footer());
+    return out.join("");
+  }
   const date = addDays(t, state.dayOffset);
   const rows = nearbyRows(state, date);
-  const now = Date.now();
+  out.push(holidayNotice(date, t));
   if (!state.loaded) {
     out.push(loadingCard("Checking NA, AA, Refuge Recovery, Recovery Dharma, CMA and local groups."));
   } else if (!rows.length) {
@@ -345,8 +359,8 @@ function areaNotices() {
   const copied = copies();
   const copy = copied.find((c) => restricted.some((r) => r.id === c.source.copyOf));
   if (copy) {
-    out.push(notice(`${esc(copy.source.name)} meetings are copied from their website`,
-      `Copied ${esc(copy.date ?? "recently")}. Times and places can change; check their list before a first visit.`,
+    out.push(notice(`${esc(copy.source.name)} meetings are copied from their website once a week`,
+      `Last copied ${esc(copy.date ?? "recently")}. Times and places can change; check their list before a first visit.`,
       copy.source.website ? ext(copy.source.website, "Open", "text-btn") : "", true));
   }
   const missing = restricted.filter((r) => !copied.some((c) => c.source.copyOf === r.id));
@@ -364,6 +378,30 @@ function areaNotices() {
     out.push(notice(problems.length === 1 ? `Couldn't load ${esc(problems[0].source.name)}` : `Couldn't load ${problems.length} lists`,
       esc([...new Set(problems.map((p) => p.message).filter(Boolean))].slice(0, 1).join("") || "Try again in a little while."),
       `<a class="text-btn" href="#/about">Details</a>`));
+  }
+  return out;
+}
+
+/**
+ * While someone searches, every day of the coming week that matches, so "Try God" shows each
+ * day the group meets instead of only the day picked above.
+ */
+function weekMatches(rowsOn, where) {
+  const t = today();
+  const now = Date.now();
+  const q = state.query.trim();
+  if (!state.loaded) return [loadingCard("Checking the lists…")];
+  const days = Array.from({ length: 7 }, (_, i) => addDays(t, i)).map((date) => [date, rowsOn(date)]);
+  const total = days.reduce((n, [, rows]) => n + rows.length, 0);
+  if (!total) {
+    return [`<section class="empty"><h2>Nothing this week matches “${esc(q)}”</h2>
+      <p>Searched every day this week ${esc(where)}${state.fellowships.length ? " with these filters" : ""}. Try fewer words or a wider distance.</p></section>`];
+  }
+  const out = [`<p class="muted small">Every day this week matching “${esc(q)}” · ${total} ${total === 1 ? "meeting" : "meetings"}</p>`];
+  for (const [date, rows] of days) {
+    if (!rows.length) continue;
+    out.push(sectionLabel(`${dayTitle(date, t)} · ${rows.length}`), holidayNotice(date, t),
+      ...rows.map((r) => card(r, now, r.closed || (date === t && ended(r, now)))));
   }
   return out;
 }
@@ -393,8 +431,12 @@ function onlineList() {
   const t = today();
   const now = Date.now();
   const date = state.onlineWhen === "soon" ? null : addDays(t, state.onlineWhen);
-  const rows = onlineFor(date, state.englishOnly);
   const out = [];
+  if (state.query.trim() && state.loaded) {
+    out.push(...weekMatches((d) => onlineFor(d, state.englishOnly), "online"), footer());
+    return out.join("");
+  }
+  const rows = onlineFor(date, state.englishOnly);
   if (!state.loaded || (!state.onlineLoaded && !rows.length)) {
     out.push(loadingCard("Checking online NA, Refuge Recovery, Recovery Dharma and CMA meetings."));
   } else if (!rows.length) {
@@ -456,7 +498,8 @@ function card(r, now, dimmed = false) {
   const m = r.m;
   const [hm, ap] = clockParts(r.start, r.tz);
   const zone = differsFromViewer(r.start, r.tz) && m.attendance !== ONLINE ? `<span class="tz">${esc(zoneShort(r.start, r.tz))}</span>` : "";
-  const status = statusText(r.start, r.end, now);
+  const status = r.closed ? (dateIn(r.start, r.tz) === dateIn(now, r.tz) ? "Not meeting today" : "Not meeting this day")
+    : statusText(r.start, r.end, now);
   const where = m.attendance === ONLINE ? null : [m.locationName ?? m.address, r.dist != null ? formatMiles(r.dist) : null].filter(Boolean).join(" · ");
   const saved = Boolean(state.favorites[m.key]);
   const online = m.attendance === ONLINE ? `<span class="att">${icon("videocam", "icon tiny")}Online</span>`
@@ -468,7 +511,7 @@ function card(r, now, dimmed = false) {
         <div class="badges">${badge(m.fellowship)}${online}</div>
         <h3>${esc(m.name)}</h3>
         ${where ? `<p class="where">${esc(where)}</p>` : ""}
-        ${status ? `<p class="status">${esc(status)}</p>` : ""}
+        ${status ? `<p class="status${r.closed ? " closed" : ""}">${esc(status)}</p>` : ""}
         ${m.types.length ? `<p class="types">${esc(m.types.slice(0, 4).join(" · "))}</p>` : ""}
       </div>
     </a>
@@ -516,11 +559,17 @@ function detailView(key) {
   const source = sourceById(m.sourceId);
   const sections = [];
 
+  const skips = upcomingSkips(m, dateIn(now, zoneOf(m)));
+  const nextHoliday = holidayOn(dateIn(r.start, tz));
   sections.push(section("clock", "When", `
     <p class="big">${esc(weekly(m))}, ${esc(timeRange(r.start, r.end, tz))}${esc(zone)}</p>
     <p class="accent">${esc(statusText(r.start, r.end, now) ?? `Next: ${relativeDay(r.start, now, tz)} at ${clock(r.start, tz)}`)}</p>
     ${differsFromViewer(r.start, tz) && m.attendance !== ONLINE
-      ? `<p class="muted">That's ${esc(clock(r.start, viewerZone()))} ${esc(zoneShort(r.start, viewerZone()))} where you are.</p>` : ""}`));
+      ? `<p class="muted">That's ${esc(clock(r.start, viewerZone()))} ${esc(zoneShort(r.start, viewerZone()))} where you are.</p>` : ""}
+    ${skips.length ? `<p class="warn-text strong">Not meeting ${esc(skips.slice(0, 4).map(shortDate).join(", "))}${skips.length > 4 ? " and more" : ""}, according to the group.</p>` : ""}
+    ${nextHoliday ? `<p class="muted">The next one falls on ${esc(nextHoliday)}. Some groups don't meet on holidays; check before you go.</p>` : ""}
+    ${groupLine(m, now)}
+    <p class="row-btns"><button class="btn tonal" data-action="add-calendar" data-key="${esc(m.key)}">${icon("event")} Add to calendar</button></p>`));
 
   if (m.attendance !== ONLINE) {
     const directions = directionsUrl(m);
@@ -555,13 +604,58 @@ function detailView(key) {
       ? `Copied from ${esc(source.name)}'s public website${copiedOn ? ` on ${esc(copiedOn)}` : ""}. It may have changed since.`
       : `From ${esc(source?.name ?? fl(m.fellowship).full)}`}</p>
     ${m.listingUrl ? `<p>${ext(m.listingUrl, `Open the live listing ${icon("openInNew", "icon tiny")}`, "link")}</p>` : ""}
-    <p class="muted small">Schedules change, especially around holidays. Check the live listing or call before a first visit.</p>`));
+    <p class="muted small">Schedules change, especially around holidays. Check the live listing or call before a first visit.</p>
+    <p>${ext(problemMail(m, r), `${icon("flag", "icon tiny")} Report a problem with this listing`, "link")}</p>`));
 
   return back + `<main class="detail">
     <div class="badges">${`<span class="badge f-${m.fellowship.toLowerCase()} wide">${esc(fl(m.fellowship).full)}</span>`}<span class="att">${esc(ATTENDANCE_LABEL[m.attendance])}</span></div>
     <h1 class="detail-name">${esc(m.name)}</h1>
     ${sections.join("")}
   </main>`;
+}
+
+/** "This group meets Mondays and Wednesdays at 7:00 PM", with a link to each other time. */
+function groupLine(m, now) {
+  const group = groupMeetings(state.meetings, m);
+  if (group.length < 2) return "";
+  const when = (g) => clock(nextOccurrence(g, now), g.attendance === ONLINE ? viewerZone() : zoneOf(g));
+  const times = new Set(group.map(when));
+  const summary = times.size === 1
+    ? `This group meets ${dayList(group.map((g) => g.day))} at ${[...times][0]}.`
+    : "This group meets:";
+  const items = times.size === 1 ? "" : `<ul>${group.map((g) => g.key === m.key
+    ? `<li><strong>${esc(weekly(g))} ${esc(when(g))}</strong> (this one)</li>`
+    : `<li><a class="link" href="#/m/${encodeURIComponent(g.key)}">${esc(weekly(g))} ${esc(when(g))}</a></li>`).join("")}</ul>`;
+  return `<div class="group-times"><p class="strong">${esc(summary)}</p>${items}</div>`;
+}
+
+/** An email to hello@ with the meeting filled in, for a closed door, a move or a new time. */
+function problemMail(m, r) {
+  const tz = m.attendance === ONLINE ? viewerZone() : zoneOf(m);
+  const where = m.attendance === ONLINE ? "Online" : [m.locationName, m.address].filter(Boolean).join(", ");
+  const body = [
+    `Meeting: ${m.name} (${fl(m.fellowship).full})`,
+    `When: ${weekly(m)}, ${timeRange(r.start, r.end, tz)}`,
+    `Where: ${where}`,
+    `Listed by: ${sourceById(m.sourceId)?.name ?? "unknown"}`,
+    `Listing ID: ${m.key}`,
+    "",
+    "What's wrong? (For example: not meeting on a date, moved, new time, ended)",
+    "",
+  ].join("\n");
+  return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`Listing problem: ${m.name}`)}&body=${encodeURIComponent(body)}`;
+}
+
+function downloadCalendar(m) {
+  const blob = new Blob([meetingIcs(m, { label: fl(m.fellowship).label })], { type: "text/calendar" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = icsFileName(m.name);
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+  toast("Calendar file ready. Open it to add this meeting every week, with a reminder 30 minutes before.");
 }
 
 function joinLabel(url) {
@@ -913,6 +1007,11 @@ document.addEventListener("click", (e) => {
     case "locate": return locate(el);
     case "lines": return linesDialog();
     case "share-menu": return shareMenu();
+    case "add-calendar": {
+      const m = state.byKey.get(el.dataset.key) ?? state.favorites[el.dataset.key];
+      if (m) downloadCalendar(m);
+      return;
+    }
     case "share-meeting": {
       const m = state.byKey.get(el.dataset.key) ?? state.favorites[el.dataset.key];
       if (!m) return;

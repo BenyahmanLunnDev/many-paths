@@ -107,6 +107,55 @@ export function zoneOf(m) {
   return isValidZone(m.tz) ? m.tz : viewerZone();
 }
 
+/**
+ * The start a meeting would have had on [date] when its list says it isn't meeting that day
+ * (a holiday, a cancelled week), else null. Shown as "Not meeting" rather than left out, so
+ * someone who goes every week finds out before they drive there.
+ */
+export function skippedOn(m, date, viewZone) {
+  if (!m.skip || !m.skip.length) return null;
+  const mz = zoneOf(m);
+  for (const offset of [-1, 0, 1]) {
+    const d = addDays(date, offset);
+    if (weekday(d) !== m.day) continue;
+    const start = zonedTime(d, m.start, mz);
+    if (dateIn(start, viewZone) === date) return m.skip.includes(d) && (!m.until || d <= m.until) ? start : null;
+  }
+  return null;
+}
+
+/**
+ * The US holiday on [date], or a day many buildings close around one, else null. Meeting lists
+ * rarely say when a church or club is closed for a holiday, so the lists warn on these days.
+ */
+export function holidayOn(date) {
+  const [, mo, d] = date.split("-").map(Number);
+  const wd = weekday(date);
+  const nth = Math.ceil(d / 7);
+  const last = addDays(date, 7).slice(5, 7) !== date.slice(5, 7);
+  if (mo === 1 && d === 1) return "New Year's Day";
+  if (mo === 1 && wd === 1 && nth === 3) return "Martin Luther King Jr. Day";
+  if (mo === 2 && wd === 1 && nth === 3) return "Presidents' Day";
+  if (mo === 5 && wd === 1 && last) return "Memorial Day";
+  if (mo === 6 && d === 19) return "Juneteenth";
+  if (mo === 7 && d === 4) return "Independence Day";
+  if (mo === 9 && wd === 1 && nth === 1) return "Labor Day";
+  if (mo === 10 && wd === 1 && nth === 2) return "Indigenous Peoples' Day";
+  if (mo === 11 && d === 11) return "Veterans Day";
+  if (mo === 11 && wd === 4 && nth === 4) return "Thanksgiving";
+  if (mo === 11 && wd === 5 && holidayOn(addDays(date, -1)) === "Thanksgiving") return "the day after Thanksgiving";
+  if (mo === 12 && d === 24) return "Christmas Eve";
+  if (mo === 12 && d === 25) return "Christmas";
+  if (mo === 12 && d === 31) return "New Year's Eve";
+  return null;
+}
+
+/** Upcoming dates a meeting is listed as not meeting, soonest first: ["2026-11-26", ...]. */
+export function upcomingSkips(m, today, days = 60) {
+  const end = addDays(today, days);
+  return (m.skip ?? []).filter((d) => d >= today && d <= end).sort();
+}
+
 /** False on a listed closure day or after a hand-entered group's last date. */
 export function meetsOn(m, date) {
   return !(m.skip && m.skip.includes(date)) && (!m.until || date <= m.until);
@@ -249,6 +298,16 @@ export function statusText(start, end, now) {
 
 export function copiedDate(iso) {
   if (!isIsoDate(iso)) return null;
-  const b = dateBits(iso);
-  return `${b.mon} ${b.d}`;
+  return shortDate(iso);
+}
+
+/** "Mondays and Wednesdays", "Tuesdays, Thursdays and Saturdays", "Monday through Saturday", "every day". */
+export function dayList(days) {
+  const set = [...new Set(days)].sort((a, b) => a - b);
+  if (set.length === 7) return "every day";
+  if (set.length >= 3 && set[set.length - 1] - set[0] === set.length - 1) {
+    return `${DAY_NAMES[set[0]]} through ${DAY_NAMES[set[set.length - 1]]}`;
+  }
+  const names = set.map((d) => DAY_NAMES[d] + "s");
+  return names.length < 2 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 }
