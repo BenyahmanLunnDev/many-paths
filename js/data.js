@@ -81,14 +81,17 @@ async function loadSource(source, manifest, area, radius, today) {
 
 const ok = (source, meetings) => ({ source, state: "OK", count: meetings.length, meetings });
 
+/** The big lists of online meetings only (NA's, AA's Online Intergroup): nothing for "Near me". */
+const onlineOnly = (s) => s.kind === "BMLT_ONLINE" || s.allOnline === true;
+
 /**
- * Loads every relevant list. [phase] "nearby" skips the big online NA list so the first
- * screen fills quickly; "all" includes it.
+ * Loads every relevant list. [phase] "nearby" skips the big online-only lists so the first
+ * screen fills quickly; "all" includes them.
  */
 export async function loadMeetings({ area, radius, phase = "all", force = false }) {
   const { sources, manifest } = await loadCatalog(force);
   const today = dateIn(Date.now(), viewerZone());
-  const wanted = relevantSources(sources, area).filter((s) => phase === "all" || s.kind !== "BMLT_ONLINE");
+  const wanted = relevantSources(sources, area).filter((s) => phase === "all" || !onlineOnly(s));
   const results = await Promise.all(wanted.map((s) =>
     loadSource(s, manifest, area, radius, today).catch((e) => ({ source: s, state: "ERROR", count: 0, meetings: [], message: e.message }))));
   const meetings = resolveTimeZones(dedupe(results.flatMap((r) => r.meetings)));

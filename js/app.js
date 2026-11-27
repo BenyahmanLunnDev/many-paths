@@ -452,7 +452,7 @@ function onlineList() {
   }
   const rows = onlineFor(date, state.englishOnly);
   if (!state.loaded || (!state.onlineLoaded && !rows.length)) {
-    out.push(loadingCard("Checking online NA, Refuge Recovery, Recovery Dharma and CMA meetings."));
+    out.push(loadingCard("Checking online AA, NA, Refuge Recovery, Recovery Dharma and CMA meetings."));
   } else if (!rows.length) {
     const hidden = state.englishOnly ? onlineFor(date, false).length : 0;
     out.push(`<section class="empty"><h2>No online meetings found</h2><p>${hidden > 0
@@ -466,7 +466,7 @@ function onlineList() {
   } else {
     out.push(sectionLabel(`${dayTitle(date, t)} · ${rows.length} meetings`), ...paged(rows, (r) => card(r, now, date === t && ended(r, now))));
   }
-  if (state.loaded && !state.onlineLoaded) out.push(`<p class="muted small center">Still gathering online NA meetings…</p>`);
+  if (state.loaded && !state.onlineLoaded) out.push(`<p class="muted small center">Still gathering online AA and NA meetings…</p>`);
   out.push(footer());
   return out.join("");
 }
