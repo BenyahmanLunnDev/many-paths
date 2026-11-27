@@ -1,6 +1,6 @@
 // Offline support. The app's own files are served from the cache and refreshed in the
 // background; meeting lists come from the network when it answers, else the last copy.
-const VERSION = "2026-11-27.8";
+const VERSION = "2026-11-27.9";
 const SHELL = `shell-${VERSION}`;
 const DATA = "data-v1";
 const SHELL_FILES = [

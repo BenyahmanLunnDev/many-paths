@@ -221,9 +221,9 @@ function mainView(view) {
     <header class="top">
       <h1>${title}</h1>
       <div class="top-actions">
-        <button class="icon-btn" data-action="toggle-search" aria-label="Search" aria-expanded="${state.searchOpen}">${icon("search")}</button>
-        <button class="icon-btn" data-action="share-menu" aria-label="Share this list">${icon("share")}</button>
-        <a class="icon-btn" href="#/about" aria-label="Meeting lists and help">${icon("info")}</a>
+        <button class="icon-btn" data-action="toggle-search" aria-label="Search" title="Search meeting names, places and types" aria-expanded="${state.searchOpen}">${icon("search")}</button>
+        <button class="icon-btn" data-action="share-menu" aria-label="Share this list" title="Share or copy this list of meetings">${icon("share")}</button>
+        <a class="icon-btn" href="#/about" aria-label="Meeting lists and help" title="Help, settings and where the meetings come from">${icon("info")}</a>
       </div>
     </header>
     ${state.searchOpen ? `<div class="search-row"><input id="q" type="search" placeholder="Search names, places, types" value="${esc(state.query)}" autocomplete="off" enterkeyhint="search" aria-label="Search meetings"></div>` : ""}
@@ -1250,9 +1250,9 @@ function deskTop(view) {
     <label class="dsearch">${icon("search")}<input id="q" type="search" placeholder="Search names, places and types across the week" value="${esc(state.query)}" autocomplete="off" aria-label="Search meetings"></label>
     <div class="dtop-actions">
       <button class="icon-btn" data-action="desk-layout" aria-label="${top ? "Show filters in a column" : "Show filters above the list"}" title="${top ? "Filters in a column" : "Filters above the list"}">${icon(top ? "viewSidebar" : "viewAgenda")}</button>
-      <a class="btn tonal" href="#/get">${icon("download")}<span>Get the app</span></a>
-      <button class="icon-btn" data-action="share-menu" aria-label="Share this list">${icon("share")}</button>
-      <a class="icon-btn" href="#/about" aria-label="Meeting lists and help">${icon("info")}</a>
+      <a class="btn tonal" href="#/get" aria-label="Get the phone app" title="Get the free phone app: App Store and Google Play links. Nothing downloads to this computer.">${icon("download")}<span>Get the app</span></a>
+      <button class="icon-btn" data-action="share-menu" aria-label="Share this list" title="Share or copy this list of meetings">${icon("share")}</button>
+      <a class="icon-btn" href="#/about" aria-label="Meeting lists and help" title="Help, settings and where the meetings come from">${icon("info")}</a>
     </div>`;
 }
 
