@@ -966,9 +966,9 @@ function doShareAction(action) {
   const now = Date.now();
   if (action === "share-day") {
     const date = addDays(t, state.dayOffset);
-    share("Recovery meetings", listShareText(`Recovery meetings near ${state.area.label}: ${dayTitle(date, t)}`, nearbyRows(state, date), { extras: shareExtras() }));
+    share("Recovery meetings", listShareText(`Recovery meetings near ${state.area.label}: ${dayTitle(date, t)}`, nearbyRows(state, date).filter((r) => !r.closed), { extras: shareExtras() }));
   } else if (action === "share-week") {
-    const days = Array.from({ length: 7 }, (_, i) => addDays(t, i)).map((d) => [d, nearbyRows(state, d)]);
+    const days = Array.from({ length: 7 }, (_, i) => addDays(t, i)).map((d) => [d, nearbyRows(state, d).filter((r) => !r.closed)]);
     share("Recovery meetings this week", weekShareText(state.area.label, state.radius, days, t, shareExtras()));
   } else if (action === "share-online") {
     const date = state.onlineWhen === "soon" ? null : addDays(t, state.onlineWhen);
