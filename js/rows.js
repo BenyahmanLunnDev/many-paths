@@ -2,6 +2,7 @@
 
 import { FELLOWSHIPS, FELLOWSHIP_ORDER, IN_PERSON, ONLINE, isJoinable } from "./model.js";
 import { nextOccurrence, occurrenceOn, skippedOn, viewerZone, zoneOf } from "./time.js";
+import { STATE_NAMES } from "./text.js";
 
 const EARTH_RADIUS_MILES = 3958.8;
 const rad = (d) => (d * Math.PI) / 180;
@@ -63,9 +64,14 @@ export function resolveTimeZones(meetings, fallback = viewerZone()) {
   });
 }
 
+// ", OR 97212" or ", OR" at the end of an address part.
+const STATE_IN_ADDRESS = /,\s*([A-Z]{2})(?=\s+\d|\s*,|\s*$)/g;
+
 export function matches(m, query) {
   if (!query || !query.trim()) return true;
-  const hay = [m.name, m.locationName, m.address, FELLOWSHIPS[m.fellowship]?.full, FELLOWSHIPS[m.fellowship]?.label, ...m.types]
+  // Addresses say "OR"; people type "Oregon". Spell the state out so both match.
+  const states = m.address ? [...m.address.matchAll(STATE_IN_ADDRESS)].map((x) => STATE_NAMES[x[1]]) : [];
+  const hay = [m.name, m.locationName, m.address, ...states, FELLOWSHIPS[m.fellowship]?.full, FELLOWSHIPS[m.fellowship]?.label, ...m.types]
     .filter(Boolean).join(" ").toLowerCase();
   return query.trim().toLowerCase().split(/\s+/).every((w) => hay.includes(w));
 }

@@ -194,6 +194,10 @@ test("lists", () => {
   assert.equal(dedupe([near, { ...near, key: "z", name: "TEST!" }]).length, 1);
   assert.equal(matches({ ...near, name: "Friendship Group", types: ["Open"] }, "friendship open"), true);
   assert.equal(matches({ ...near, name: "Friendship Group", types: [] }, "friendship tuesday"), false);
+  // "Oregon" finds addresses that say "OR"; "new york" finds "NY".
+  assert.equal(matches({ ...near, name: "Try God", address: "3807 NE MLK Jr Blvd, Portland, OR 97212, USA", types: [] }, "portland oregon"), true);
+  assert.equal(matches({ ...near, name: "Try God", address: "1 Main St, Albany, NY", types: [] }, "albany new york"), true);
+  assert.equal(matches({ ...near, name: "Try God", address: "1 Main St, Albany, NY", types: [] }, "albany oregon"), false);
   assert.equal(placeLine({ locationName: "1166 Oak St", address: "1166 Oak St, Eugene, OR" }), "1166 Oak St, Eugene, OR");
 });
 

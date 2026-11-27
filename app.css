@@ -586,6 +586,8 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; width: 100%; }
   .fseg.small { margin: 0; }
   .fseg button { flex: 1 1 0; min-width: 0; min-height: 30px; padding: 4px 10px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font: inherit; font-size: 14px; font-weight: 600; white-space: nowrap; cursor: pointer; }
   .fseg button.on { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+  /* Five distances share a narrow filter column. */
+  .fseg[aria-label="Distance"] button { padding-inline: 2px; font-size: 13px; }
   .fbtns { display: grid; gap: 8px; margin-top: 10px; }
   .flines { display: grid; gap: 8px; margin: 0; padding: 0 6px; list-style: none; font-size: 14px; }
   .flines li { display: grid; }

@@ -33,7 +33,7 @@ function holidayNotice(date, t) {
 const PRIVACY_URL = "https://benyahmanlunndev.github.io/many-paths-data/privacy.html";
 const SOURCE_URL = "https://github.com/BenyahmanLunnDev/many-paths";
 const CONTACT_EMAIL = "hello@manypathsmeetings.com";
-const RADII = [5, 10, 15, 25];
+const RADII = [5, 10, 15, 25, 50];
 const PAGE = 100; // cards drawn at once; a day of online meetings can run to hundreds
 
 // ---- Saved settings (this browser only) ----
