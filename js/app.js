@@ -1317,13 +1317,13 @@ function deskBar(view) {
   return `<div class="brow">
       <button class="bplace" data-action="pick-area" title="Change place or distance">${icon("place", "icon brand")}<strong>${esc(state.area.label)}</strong><span>${state.radius} mi</span>${icon("expand", "icon tiny")}</button>
       <div class="bchips" role="group" aria-label="Day">${days}</div>
+      <a class="bchip crisis-chip" href="tel:988">Crisis? Call or text 988</a>
       <div class="fseg" role="group" aria-label="Layout"><button class="${state.deskView === "list" ? "on" : ""}" data-action="desk-view" data-value="list" aria-pressed="${state.deskView === "list"}">List</button><button class="${state.deskView === "week" ? "on" : ""}" data-action="desk-view" data-value="week" aria-pressed="${state.deskView === "week"}">Week</button></div>
     </div>
     <div class="brow">
       <div class="bchips" role="group" aria-label="Fellowship">${fellowshipChips2(nearbyFellowships(state), (f) => rows.filter((r) => r.m.fellowship === f && !r.closed).length)}</div>
       ${typeMenu(nearbyRows(withoutTypes, date))}
       ${lines.length ? `<button class="bchip" data-action="lines">${icon("phone", "icon tiny")}<span>Phone lines</span></button>` : ""}
-      <a class="bchip crisis-chip" href="tel:988">Crisis? Call or text 988</a>
     </div>`;
 }
 
