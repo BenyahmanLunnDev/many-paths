@@ -74,7 +74,7 @@ body {
   padding-bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom) + 16px);
 }
 
-body[data-view="detail"], body[data-view="about"] { padding-bottom: calc(env(safe-area-inset-bottom) + 32px); }
+body[data-view="detail"], body[data-view="about"], body[data-view="get"], body[data-view="flyer"] { padding-bottom: calc(env(safe-area-inset-bottom) + 32px); }
 
 a { color: var(--brand); }
 h1, h2, h3 { margin: 0; }
@@ -392,6 +392,11 @@ button { font: inherit; color: inherit; }
 .about { display: grid; gap: 14px; padding: 4px 16px 24px; }
 .card-block { display: grid; gap: 10px; padding: 18px; border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); }
 .card-block h2 { font-size: 18px; }
+/* Pass it on: the flyer and the picture */
+.pass .preview { display: block; width: 100%; max-width: 420px; height: auto; margin: 4px auto; border-radius: 10px; overflow: hidden;
+  border: 1px solid var(--line); box-shadow: 0 2px 12px rgb(19 38 43 / 14%); }
+.pass .preview img { display: block; width: 100%; height: auto; }
+.post-text { padding: 12px 14px; border-radius: 12px; background: var(--surface-2); }
 .crisis { background: var(--brand-soft); color: var(--on-brand-soft); }
 .source-list { list-style: none; margin: 0; padding: 0; display: grid; }
 .source-list li { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line); }
@@ -441,6 +446,7 @@ dialog.sheet::backdrop { background: rgb(0 0 0 / 45%); }
 }
 .suggestion:hover, .menu-item:hover { background: var(--surface-2); }
 .suggestion .icon, .menu-item .icon { color: var(--brand); }
+a.menu-item { color: inherit; text-decoration: none; }
 .error { color: var(--error); }
 .line { display: grid; gap: 4px; padding: 6px 0; }
 .line-head { display: flex; align-items: center; gap: 8px; }
@@ -489,7 +495,8 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; width: 100%; }
 @media (min-width: 1100px) {
   body[data-layout="desk"] { max-width: none; padding: 0; overflow: hidden; font-size: 15px; }
   body[data-layout="desk"][data-view="about"],
-  body[data-layout="desk"][data-view="get"] { max-width: 820px; padding: 24px 24px 48px; overflow: auto; font-size: 16px; }
+  body[data-layout="desk"][data-view="get"],
+  body[data-layout="desk"][data-view="flyer"] { max-width: 820px; padding: 24px 24px 48px; overflow: auto; font-size: 16px; }
 
   .desk {
     --w-filters: 280px;

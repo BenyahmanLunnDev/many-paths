@@ -33,6 +33,7 @@ function holidayNotice(date, t) {
 const PRIVACY_URL = "https://benyahmanlunndev.github.io/many-paths-data/privacy.html";
 const SOURCE_URL = "https://github.com/BenyahmanLunnDev/many-paths";
 const CONTACT_EMAIL = "hello@manypathsmeetings.com";
+const SHARE_TITLE = "Share this list of meetings, or the Many Paths flyer and picture";
 const RADII = [5, 10, 15, 25, 50];
 const PAGE = 100; // cards drawn at once; a day of online meetings can run to hundreds
 
@@ -155,13 +156,13 @@ function setArea(area) {
   refresh();
 }
 
-// ---- Routing: #/ near me, #/online, #/saved, #/about, #/m/<key> ----
+// ---- Routing: #/ near me, #/online, #/saved, #/about, #/get, #/flyer, #/m/<key> ----
 
 function route() {
   const h = location.hash.replace(/^#\/?/, "");
   if (h.startsWith("m/")) return { view: "detail", key: decodeURIComponent(h.slice(2)) };
   if (h === "test" || h === "get") return { view: "get" };
-  if (["online", "saved", "about"].includes(h)) return { view: h };
+  if (["online", "saved", "about", "flyer"].includes(h)) return { view: h };
   return { view: "near" };
 }
 
@@ -175,7 +176,7 @@ window.addEventListener("hashchange", () => {
   const next = route().view;
   currentView = next;
   render();
-  window.scrollTo(0, next === "detail" || next === "about" ? 0 : scrollMemory[next] ?? 0);
+  window.scrollTo(0, ["detail", "about", "get", "flyer"].includes(next) ? 0 : scrollMemory[next] ?? 0);
 });
 
 // ---- Rendering ----
@@ -195,14 +196,16 @@ function render() {
   memoStore = new Map();
   const r = route();
   document.body.dataset.layout = isDesk() ? "desk" : "phone";
-  if (isDesk() && r.view !== "about" && r.view !== "get") return renderDesk(r);
+  if (isDesk() && !["about", "get", "flyer"].includes(r.view)) return renderDesk(r);
   document.body.dataset.view = r.view;
   if (r.view === "detail") app.innerHTML = detailView(r.key);
   else if (r.view === "about") app.innerHTML = aboutView();
   else if (r.view === "get") app.innerHTML = getView();
+  else if (r.view === "flyer") app.innerHTML = flyerView();
   else app.innerHTML = mainView(r.view);
   document.title = { near: "Many Paths: recovery meetings near you and online", online: "Online meetings · Many Paths", saved: "Saved meetings · Many Paths",
-    about: "Lists and help · Many Paths", detail: "Meeting · Many Paths", get: "Get Many Paths" }[r.view];
+    about: "Lists and help · Many Paths", detail: "Meeting · Many Paths", get: "Get Many Paths", flyer: "Pass it on · Many Paths" }[r.view];
+  if (r.view === "flyer") loadPicture();
 }
 
 /** Re-renders just the list, so typing in the search box keeps its focus. */
@@ -222,7 +225,7 @@ function mainView(view) {
       <h1>${title}</h1>
       <div class="top-actions">
         <button class="icon-btn" data-action="toggle-search" aria-label="Search" title="Search meeting names, places and types" aria-expanded="${state.searchOpen}">${icon("search")}</button>
-        <button class="icon-btn" data-action="share-menu" aria-label="Share this list" title="Share or copy this list of meetings">${icon("share")}</button>
+        <button class="icon-btn" data-action="share-menu" aria-label="Share" title="${SHARE_TITLE}">${icon("share")}</button>
         <a class="icon-btn" href="#/about" aria-label="Meeting lists and help" title="Help, settings and where the meetings come from">${icon("info")}</a>
       </div>
     </header>
@@ -741,6 +744,9 @@ function aboutView() {
         <h3>Get the app</h3>
         <p>The same meetings, plus home-screen widgets. Free, with no ads and no account.</p>
         ${storeButtons()}
+        <h3>Pass it on</h3>
+        <p>A flyer to print and a picture to post, for anyone who'd like to tell others about Many Paths.</p>
+        <p><a class="btn tonal" href="#/flyer">${icon("image")} Flyer and picture</a></p>
         <p>Questions, or a listing that's wrong? <a class="link" href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a></p>
         <p>${ext(SOURCE_URL, "Free and open source (GPL-3.0)", "link")} · ${ext(DATA.replace(/v1\/$/, ""), "Today's data report", "link")}</p>
       </section>
@@ -770,9 +776,90 @@ function getView() {
       <section class="card-block">
         <h2>Pass it on</h2>
         <p>Send this page to anyone who might need it: <strong>${SITE}</strong></p>
+        <p><a class="btn tonal" href="#/flyer">${icon("image")} A flyer to print and a picture to post</a></p>
         <p class="muted small">Made by Benyahman Lunn, an independent developer who works in the recovery field. Many Paths isn't affiliated with any fellowship.</p>
       </section>
     </main>`;
+}
+
+// ---- Pass it on: the flyer and the picture, for people who'd like to share Many Paths (#/flyer) ----
+// The files in flyer/ come from marketing/build.py in the app repo.
+
+const POST_TEXT = "Many Paths is a free app for finding recovery meetings near you and online: AA, NA, Al-Anon, " +
+  "Refuge Recovery, Recovery Dharma, CMA, Wellbriety and more, in one list. No ads, no account, no tracking. " +
+  "iPhone, Android or any web browser: manypathsmeetings.com/get";
+const PICTURE_URL = "flyer/Many-Paths-picture.png";
+let picture = null; // the picture as a file, fetched ahead so a tap on Share opens the share sheet at once
+
+const canShareFiles = () => {
+  try {
+    return Boolean(navigator.canShare?.({ files: [new File([""], "x.png", { type: "image/png" })] }));
+  } catch {
+    return false;
+  }
+};
+
+function flyerView() {
+  return `<header class="top detail-top">
+      <button class="icon-btn" data-action="back" aria-label="Back">${icon("back")}</button>
+      <h1>Pass it on</h1>
+    </header>
+    <main class="about pass">
+      <section class="card-block">
+        <h2>Share Many Paths</h2>
+        <p>If Many Paths has helped you, you can help someone else find it: print the flyer, or post the picture for your friends. Both are free to print, post and share.</p>
+      </section>
+      <section class="card-block">
+        <h2>A flyer to print</h2>
+        <p>Letter size, in color, and it still reads well in black and white. The QR code opens the App Store on an iPhone and Google Play on an Android phone.</p>
+        <a class="preview" href="flyer/Many-Paths-flyer.pdf" target="_blank" rel="noopener" aria-label="Open the flyer (PDF)"><img src="flyer/Many-Paths-flyer.jpg" width="816" height="1056" alt="The Many Paths flyer: recovery meetings near you and online, all in one place. It lists what the app does, shows it on a phone, and has a QR code to get the free app."></a>
+        <p class="row-btns"><a class="btn" href="flyer/Many-Paths-flyer.pdf" download>${icon("download")} Download the flyer (PDF)</a></p>
+        <p class="muted small">Many meetings only set out their own fellowship's literature, so ask the group before leaving flyers there. Community boards, clinics, libraries and coffee shops are good places too.</p>
+      </section>
+      <section class="card-block">
+        <h2>A picture to post</h2>
+        <p>Square, for Facebook, Instagram, X or a group chat.</p>
+        <img class="preview" src="${PICTURE_URL}" width="1080" height="1080" alt="Many Paths: recovery meetings near you and online, all in one place. A phone shows online meetings starting soon. manypathsmeetings.com">
+        <p class="row-btns">
+          ${canShareFiles() ? `<button class="btn" data-action="share-picture">${icon("share")} Share the picture</button>` : ""}
+          <a class="btn${canShareFiles() ? " tonal" : ""}" href="${PICTURE_URL}" download>${icon("download")} Save the picture</a>
+        </p>
+        <h3>Words to go with it</h3>
+        <p class="post-text">${esc(POST_TEXT)}</p>
+        <p><button class="btn tonal" data-action="copy-post">${icon("notes")} Copy these words</button></p>
+        <p class="muted small">Share only where you're comfortable. Plenty of people pass Many Paths on for a friend or someone in their family.</p>
+      </section>
+      <section class="card-block">
+        <h2>Just the QR code</h2>
+        <p>For a newsletter, a group's own flyer or a business card. It opens the right app store on a phone.</p>
+        <p><a class="btn tonal" href="flyer/Many-Paths-QR.png" download>${icon("download")} Download the QR code</a></p>
+      </section>
+    </main>`;
+}
+
+function loadPicture() {
+  if (picture || !canShareFiles()) return;
+  fetch(PICTURE_URL).then((r) => (r.ok ? r.blob() : null)).then((blob) => {
+    if (blob) picture = new File([blob], "Many-Paths.png", { type: "image/png" });
+  }).catch(() => {});
+}
+
+async function sharePicture() {
+  if (!picture) return toast("The picture is still loading. Try again in a moment.");
+  try {
+    await navigator.share({ files: [picture], text: POST_TEXT });
+  } catch (e) {
+    if (e.name !== "AbortError") toast("Couldn't share the picture. Save it instead, then post it.");
+  }
+}
+
+async function copyPost() {
+  try {
+    await navigator.clipboard.writeText(POST_TEXT);
+    toast("Copied. Paste it with the picture.");
+  } catch {
+    toast("Couldn't copy from this browser. Select the words and copy them.");
+  }
 }
 
 // ---- Dialogs ----
@@ -937,11 +1024,13 @@ function shareMenu() {
   } else if (view === "saved") {
     options.push(["share-saved", "Share my saved meetings"]);
   }
-  if (!options.length) return toast("Choose a place first.");
-  if (options.length === 1) return doShareAction(options[0][0]);
+  // The list goes out as a text; Many Paths itself goes out as the flyer and the picture.
   const dialog = openDialog(`<form method="dialog" class="sheet-body">
-      <div class="sheet-head"><h2>Share as a text</h2><button class="icon-btn" value="close" aria-label="Close">${icon("close")}</button></div>
+      <div class="sheet-head"><h2>Share</h2><button class="icon-btn" value="close" aria-label="Close">${icon("close")}</button></div>
       ${options.map(([a, label]) => `<button type="button" class="menu-item" data-share="${a}">${icon("share")} ${esc(label)}</button>`).join("")}
+      ${options.length ? "" : `<p class="muted small">Choose a place to share its meetings.</p>`}
+      <hr>
+      <a class="menu-item" href="#/flyer">${icon("image")} Share Many Paths: a flyer and a picture</a>
     </form>`, "Share");
   dialog.addEventListener("click", (e) => {
     const el = e.target.closest("[data-share]");
@@ -1054,6 +1143,8 @@ document.addEventListener("click", (e) => {
     case "locate": return locate(el);
     case "lines": return linesDialog();
     case "share-menu": return shareMenu();
+    case "share-picture": return sharePicture();
+    case "copy-post": return copyPost();
     case "add-calendar": {
       const m = state.byKey.get(el.dataset.key) ?? state.favorites[el.dataset.key];
       if (m) downloadCalendar(m);
@@ -1251,7 +1342,7 @@ function deskTop(view) {
     <div class="dtop-actions">
       <button class="icon-btn" data-action="desk-layout" aria-label="${top ? "Show filters in a column" : "Show filters above the list"}" title="${top ? "Filters in a column" : "Filters above the list"}">${icon(top ? "viewSidebar" : "viewAgenda")}</button>
       <a class="btn tonal" href="#/get" aria-label="Get the phone app" title="Get the free phone app: App Store and Google Play links. Nothing downloads to this computer.">${icon("download")}<span>Get the app</span></a>
-      <button class="icon-btn" data-action="share-menu" aria-label="Share this list" title="Share or copy this list of meetings">${icon("share")}</button>
+      <button class="icon-btn" data-action="share-menu" aria-label="Share" title="${SHARE_TITLE}">${icon("share")}</button>
       <a class="icon-btn" href="#/about" aria-label="Meeting lists and help" title="Help, settings and where the meetings come from">${icon("info")}</a>
     </div>`;
 }

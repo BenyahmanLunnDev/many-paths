@@ -13,6 +13,8 @@ anything. `/get` sends a phone straight to its app store (the flyer's QR code po
 - **Saved:** tap the heart to keep a meeting
 - **Phone lines:** local AA and NA lines near the chosen place, plus 988
 - **Share:** a day's or a week's meetings as plain text, for a sponsor, a client or a friend
+- **Pass it on:** `/flyer` (the `#/flyer` page) offers the printable flyer, a square picture for social media and the
+  QR code on its own; the files in `flyer/` are made by `marketing/build.py` in the app repo
 - **Works offline** with the last lists it loaded
 
 No account, no ads, no tracking. See the [privacy policy](https://benyahmanlunndev.github.io/many-paths-data/privacy.html).
